@@ -1,5 +1,6 @@
 package com.tfg.streaming.users_service.controller;
 
+import com.tfg.streaming.users_service.dto.AuthResponse;
 import com.tfg.streaming.users_service.dto.LoginRequest;
 import com.tfg.streaming.users_service.dto.RegisterRequest;
 import com.tfg.streaming.users_service.dto.UserResponse;
@@ -23,8 +24,8 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest request) {
-        UserResponse response = userService.login(request);
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        AuthResponse response = userService.login(request);
         return ResponseEntity.ok(response);
     }
 }

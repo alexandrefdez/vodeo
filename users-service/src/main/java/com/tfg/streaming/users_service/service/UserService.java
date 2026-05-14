@@ -1,6 +1,8 @@
 package com.tfg.streaming.users_service.service;
 
 import com.tfg.streaming.users_service.dto.RegisterRequest;
+import com.tfg.streaming.users_service.config.JwtService;
+import com.tfg.streaming.users_service.dto.AuthResponse;
 import com.tfg.streaming.users_service.dto.LoginRequest;
 import com.tfg.streaming.users_service.dto.UserResponse;
 import com.tfg.streaming.users_service.model.User;
@@ -15,6 +17,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public UserResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -37,7 +40,7 @@ public class UserService {
         return response;
     }
 
-    public UserResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -45,12 +48,14 @@ public class UserService {
             throw new RuntimeException("Invalid password");
         }
 
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setEmail(user.getEmail());
-        response.setRole(user.getRole());
+        UserResponse userResponse = new UserResponse();
+        userResponse.setId(user.getId());
+        userResponse.setUsername(user.getUsername());
+        userResponse.setEmail(user.getEmail());
+        userResponse.setRole(user.getRole());
 
-        return response;
+        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
+
+        return new AuthResponse(token, userResponse);
     }
 }
