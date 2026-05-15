@@ -18,7 +18,7 @@ public class CatalogService {
 
     private final MovieRepository movieRepository;
     private final GenreRepository genreRepository;
-    private final TmdbClient tmdbClient;
+    private final MovieMetadataService movieMetadataService;
 
     public MovieResponse createMovie(MovieRequest request) {
         Movie movie = new Movie();
@@ -75,6 +75,6 @@ public class CatalogService {
     }
 
     public ExternalMovieDto fetchMovieData(String title) {
-        return tmdbClient.searchMovie(title);
+        return movieMetadataService.fetchMovieData(title);
     }
 }
