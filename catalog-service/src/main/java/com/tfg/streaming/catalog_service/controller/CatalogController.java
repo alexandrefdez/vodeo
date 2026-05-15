@@ -1,5 +1,6 @@
 package com.tfg.streaming.catalog_service.controller;
 
+import com.tfg.streaming.catalog_service.dto.ExternalMovieDto;
 import com.tfg.streaming.catalog_service.dto.MovieRequest;
 import com.tfg.streaming.catalog_service.dto.MovieResponse;
 import com.tfg.streaming.catalog_service.service.CatalogService;
@@ -41,5 +42,14 @@ public class CatalogController {
     public ResponseEntity<Void> deleteMovie(@PathVariable Long id) {
         catalogService.deleteMovie(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/movies/fetch")
+    public ResponseEntity<ExternalMovieDto> fetchMovieData(@RequestParam String title) {
+        ExternalMovieDto data = catalogService.fetchMovieData(title);
+        if (data == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(data);
     }
 }

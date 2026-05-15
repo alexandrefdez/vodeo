@@ -1,5 +1,6 @@
 package com.tfg.streaming.catalog_service.service;
 
+import com.tfg.streaming.catalog_service.dto.ExternalMovieDto;
 import com.tfg.streaming.catalog_service.dto.MovieRequest;
 import com.tfg.streaming.catalog_service.dto.MovieResponse;
 import com.tfg.streaming.catalog_service.model.Genre;
@@ -17,6 +18,7 @@ public class CatalogService {
 
     private final MovieRepository movieRepository;
     private final GenreRepository genreRepository;
+    private final TmdbClient tmdbClient;
 
     public MovieResponse createMovie(MovieRequest request) {
         Movie movie = new Movie();
@@ -70,5 +72,9 @@ public class CatalogService {
                 .map(Genre::getName)
                 .toList());
         return response;
+    }
+
+    public ExternalMovieDto fetchMovieData(String title) {
+        return tmdbClient.searchMovie(title);
     }
 }
