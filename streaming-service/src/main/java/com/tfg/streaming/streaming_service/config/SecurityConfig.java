@@ -31,7 +31,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/streaming/upload").hasAuthority("ROLE_ADMIN")
-                        .anyRequest().authenticated())
+                        .requestMatchers(HttpMethod.GET, "/api/streaming/play/**")
+                        .hasAnyAuthority("ROLE_USER", "ROLE_ADMIN").anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
