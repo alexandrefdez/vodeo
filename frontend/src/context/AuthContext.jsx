@@ -1,12 +1,27 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
-// Creamos la caja fuerte vacía
 export const AuthContext = createContext();
 
-// Creamos el proveedor
 export const AuthProvider = ({ children }) => {
-  
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        
+        if (decoded.exp < currentTime) {
+          console.warn("El token ha caducado. Cerrando sesión...");
+          logout();
+        }
+      } catch (error) {
+        console.error("Token inválido detectado.");
+        logout();
+      }
+    }
+  }, [token]);
 
   const login = (newToken) => {
     setToken(newToken);
