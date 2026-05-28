@@ -1,14 +1,33 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axiosConfig';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Registro form enviado:", { username, email, password });
+    setError(null);
+
+    try {
+      await api.post('/register', {
+        username,
+        email,
+        password
+      });
+
+      alert("¡Cuenta creada con éxito! Ya puedes iniciar sesión.");
+      navigate('/login');
+      
+    } catch (err) {
+      console.error("Error en el registro:", err);
+      setError("Error al crear la cuenta. Es posible que el correo ya esté en uso.");
+    }
   };
 
   return (
@@ -18,6 +37,12 @@ const Register = () => {
           VODEO
         </h1>
         
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded mb-6 text-center text-sm">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <input
             type="text"
@@ -42,6 +67,7 @@ const Register = () => {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full p-4 bg-slate-800 text-white rounded focus:outline-none focus:ring-2 focus:ring-sky-500"
             required
+            minLength="3"
           />
           
           <button 
