@@ -1,13 +1,35 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axiosConfig';
+import { AuthContext } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const { login } = useContext(AuthContext); 
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login form enviado:", { email, password });
+    setError(null); 
+
+    try {
+      const response = await api.post('/login', {
+        email: email,
+        password: password
+      });
+
+      login(response.data.token);
+      
+      console.log("Exito! Token recibido y guardado.");
+      alert("Login completado con exito!");
+      
+    } catch (err) {
+      console.error("Error en el login:", err);
+      setError("Credenciales incorrectas o servidor no disponible.");
+    }
   };
 
   return (
@@ -17,6 +39,12 @@ const Login = () => {
           VODEO
         </h1>
         
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 text-red-200 p-3 rounded mb-6 text-center text-sm">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <input
             type="email"
