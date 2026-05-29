@@ -2,17 +2,30 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Catalog from './pages/Catalog';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Rutas Públicas */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-      </Routes>
-    </Router>
+          
+          {/* Rutas Privadas */}
+          <Route 
+            path="/catalog" 
+            element={
+              <PrivateRoute>
+                <Catalog />
+              </PrivateRoute>
+            } 
+          />
+        </Routes>
+      </Router>
     </AuthProvider>
   );
 }
