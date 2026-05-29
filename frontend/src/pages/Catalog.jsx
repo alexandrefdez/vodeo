@@ -1,8 +1,29 @@
-import { useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import { catalogApi } from '../api/axiosConfig';
 
 const Catalog = () => {
   const { logout } = useContext(AuthContext);
+  
+  const [movies, setMovies] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await catalogApi.get('/movies');
+        setMovies(response.data);
+      } catch (err) {
+        console.error(err);
+        setError("No se pudo cargar el catálogo. Inténtalo más tarde.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovies();
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-10">
@@ -16,9 +37,59 @@ const Catalog = () => {
         </button>
       </div>
       
-      <div className="text-center text-slate-400 mt-20">
-        <p className="text-xl animate-pulse">Conectando con el catálogo de películas...</p>
-      </div>
+      {loading && (
+        <div className="text-center text-slate-400 mt-20">
+          <p className="text-xl animate-pulse">Cargando películas...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-500/20 border border-red-500 text-red-200 p-4 rounded text-center">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && movies.length === 0 && (
+        <div className="text-center text-slate-400 mt-20">
+          <p className="text-xl">No hay películas en el catálogo todavía.</p>
+        </div>
+      )}
+
+      {!loading && !error && movies.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 gap-6">
+          {movies.map((movie) => (
+            <div 
+              key={movie.id} 
+              className="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:shadow-sky-500/20 hover:scale-105 transition-all duration-300 cursor-pointer border border-slate-700"
+            >
+              <div className="h-64 bg-slate-700 flex items-center justify-center">
+                <span className="text-slate-500 font-bold">Sin Imagen</span>
+              </div>
+              
+              <div className="p-4">
+                <h2 className="text-lg font-bold text-sky-400 mb-1 truncate" title={movie.title}>
+                  {movie.title}
+                </h2>
+                <div className="flex justify-between text-xs text-slate-400 mb-3">
+                  <span>{movie.year}</span>
+                  <span>{movie.duration} min</span>
+                </div>
+                <p className="text-sm text-slate-300 line-clamp-3">
+                  {movie.description}
+                </p>
+                
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {movie.genres && movie.genres.map((genre, index) => (
+                    <span key={index} className="bg-slate-700 text-sky-300 text-xs px-2 py-1 rounded-full">
+                      {genre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
