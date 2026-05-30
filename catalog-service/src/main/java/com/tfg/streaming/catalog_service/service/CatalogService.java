@@ -26,6 +26,7 @@ public class CatalogService {
         movie.setDescription(request.getDescription());
         movie.setYear(request.getYear());
         movie.setDuration(request.getDuration());
+        movie.setPosterUrl(request.getPosterUrl());
 
         List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
         movie.setGenres(genres);
@@ -68,6 +69,7 @@ public class CatalogService {
         response.setYear(movie.getYear());
         response.setDuration(movie.getDuration());
         response.setVideoPath(movie.getVideoPath());
+        response.setPosterUrl(movie.getPosterUrl());
         response.setGenres(movie.getGenres().stream()
                 .map(Genre::getName)
                 .toList());

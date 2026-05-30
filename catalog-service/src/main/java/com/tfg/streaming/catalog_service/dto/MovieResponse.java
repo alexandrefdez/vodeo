@@ -11,5 +11,6 @@ public class MovieResponse {
     private Integer year;
     private Integer duration;
     private String videoPath;
+    private String posterUrl;
     private List<String> genres;
 }

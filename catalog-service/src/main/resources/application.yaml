@@ -23,6 +23,7 @@ jwt:
 tmdb:
   api-key: ${TMDB_API_KEY}
   base-url: https://api.themoviedb.org/3
+  image-base-url: https://image.tmdb.org/t/p/w500
 omdb:
   api-key: ${OMDB_API_KEY}
   base-url: http://www.omdbapi.com

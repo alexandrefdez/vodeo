@@ -10,4 +10,7 @@ public class TmdbMovieResult {
 
     @JsonProperty("release_date")
     private String releaseDate;
+
+    @JsonProperty("poster_path")
+    private String posterPath;
 }
