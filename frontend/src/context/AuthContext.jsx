@@ -5,6 +5,8 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
@@ -15,12 +17,20 @@ export const AuthProvider = ({ children }) => {
         if (decoded.exp < currentTime) {
           console.warn("El token ha caducado. Cerrando sesión...");
           logout();
+        } else {
+          setUser({
+            email: decoded.sub,
+            role: decoded.role
+          });
         }
       } catch (error) {
         console.error("Token inválido detectado.");
         logout();
       }
+    } else {
+      setUser(null);
     }
+    setLoading(false);
   }, [token]);
 
   const login = (newToken) => {
@@ -30,11 +40,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setToken(null);
+    setUser(null);
     localStorage.removeItem('token'); // Lo borra del navegador
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, logout }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

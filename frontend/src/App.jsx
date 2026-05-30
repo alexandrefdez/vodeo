@@ -4,7 +4,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Catalog from './pages/Catalog';
 import Player from './pages/Player';
+import Admin from './pages/Admin';
 import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
 
 function App() {
   return (
@@ -16,7 +18,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          {/* Rutas Privadas */}
+          {/* Rutas Privadas Comunes */}
           <Route 
             path="/catalog" 
             element={
@@ -31,6 +33,16 @@ function App() {
               <PrivateRoute>
                 <Player />
               </PrivateRoute>
+            } 
+          />
+
+          {/* Rutas de Administración */}
+          <Route 
+            path="/admin" 
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
             } 
           />
         </Routes>
