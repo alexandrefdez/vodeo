@@ -1,9 +1,11 @@
 import { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { catalogApi } from '../api/axiosConfig';
 
 const Catalog = () => {
   const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,8 @@ const Catalog = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 gap-6">
           {movies.map((movie) => (
             <div 
-              key={movie.id} 
+              key={movie.id}
+              onClick={() => navigate(`/player/${movie.id}`)}
               className="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:shadow-sky-500/20 hover:scale-105 transition-all duration-300 cursor-pointer border border-slate-700 flex flex-col"
             >
               <div className="h-64 bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
