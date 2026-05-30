@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Catalog from './pages/Catalog';
+import Player from './pages/Player';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -21,6 +22,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Catalog />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/player/:id" 
+            element={
+              <PrivateRoute>
+                <Player />
               </PrivateRoute>
             } 
           />
