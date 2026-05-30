@@ -60,13 +60,21 @@ const Catalog = () => {
           {movies.map((movie) => (
             <div 
               key={movie.id} 
-              className="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:shadow-sky-500/20 hover:scale-105 transition-all duration-300 cursor-pointer border border-slate-700"
+              className="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:shadow-sky-500/20 hover:scale-105 transition-all duration-300 cursor-pointer border border-slate-700 flex flex-col"
             >
-              <div className="h-64 bg-slate-700 flex items-center justify-center">
-                <span className="text-slate-500 font-bold">Sin Imagen</span>
+              <div className="h-64 bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                {movie.posterUrl ? (
+                  <img 
+                    src={movie.posterUrl} 
+                    alt={movie.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-slate-500 font-bold">Sin Imagen</span>
+                )}
               </div>
               
-              <div className="p-4">
+              <div className="p-4 flex flex-col flex-grow">
                 <h2 className="text-lg font-bold text-sky-400 mb-1 truncate" title={movie.title}>
                   {movie.title}
                 </h2>
@@ -74,11 +82,11 @@ const Catalog = () => {
                   <span>{movie.year}</span>
                   <span>{movie.duration} min</span>
                 </div>
-                <p className="text-sm text-slate-300 line-clamp-3">
+                <p className="text-sm text-slate-300 line-clamp-3 mb-4">
                   {movie.description}
                 </p>
                 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-auto flex flex-wrap gap-2">
                   {movie.genres && movie.genres.map((genre, index) => (
                     <span key={index} className="bg-slate-700 text-sky-300 text-xs px-2 py-1 rounded-full">
                       {genre}

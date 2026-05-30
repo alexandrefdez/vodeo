@@ -9,5 +9,6 @@ public class MovieRequest {
     private String description;
     private Integer year;
     private Integer duration;
+    private String posterUrl;
     private List<Long> genreIds;
 }

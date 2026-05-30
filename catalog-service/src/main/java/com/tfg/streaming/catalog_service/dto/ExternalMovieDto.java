@@ -7,4 +7,5 @@ public class ExternalMovieDto {
     private String title;
     private String description;
     private Integer year;
+    private String posterUrl;
 }

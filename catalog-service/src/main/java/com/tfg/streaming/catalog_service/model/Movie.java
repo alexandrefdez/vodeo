@@ -25,6 +25,9 @@ public class Movie {
 
     private String videoPath;
 
+    @Column(length = 500)
+    private String posterUrl;
+
     @ManyToMany
     @JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
     private List<Genre> genres;

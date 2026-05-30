@@ -16,6 +16,9 @@ public class TmdbClient {
     @Value("${tmdb.base-url}")
     private String baseUrl;
 
+    @Value("${tmdb.image-base-url}")
+    private String imageBaseUrl;
+
     private final RestClient restClient = RestClient.create();
 
     public ExternalMovieDto searchMovie(String title) {
@@ -35,6 +38,7 @@ public class TmdbClient {
             dto.setTitle(result.getTitle());
             dto.setDescription(result.getOverview());
             dto.setYear(parseYear(result.getReleaseDate()));
+            dto.setPosterUrl(result.getPosterPath() != null ? imageBaseUrl + result.getPosterPath() : null);
 
             return dto;
 
