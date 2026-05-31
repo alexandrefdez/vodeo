@@ -10,6 +10,7 @@ import com.tfg.streaming.catalog_service.repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,8 +28,20 @@ public class CatalogService {
         movie.setYear(request.getYear());
         movie.setDuration(request.getDuration());
         movie.setPosterUrl(request.getPosterUrl());
+        movie.setVideoPath(request.getVideoPath());
 
-        List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
+        List<Genre> genres = new ArrayList<>();
+        if (request.getGenres() != null) {
+            for (String genreName : request.getGenres()) {
+                Genre genre = genreRepository.findByName(genreName)
+                        .orElseGet(() -> {
+                            Genre newGenre = new Genre();
+                            newGenre.setName(genreName);
+                            return genreRepository.save(newGenre);
+                        });
+                genres.add(genre);
+            }
+        }
         movie.setGenres(genres);
 
         Movie saved = movieRepository.save(movie);
