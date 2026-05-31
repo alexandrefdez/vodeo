@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { catalogApi } from '../api/axiosConfig';
+import { catalogApi, streamingApi } from '../api/axiosConfig';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -8,6 +8,7 @@ const Admin = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchMessage, setSearchMessage] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -58,7 +59,43 @@ const Admin = () => {
 
   const handleSaveMovie = async (e) => {
     e.preventDefault();
-    alert("Lo siguiente es la subida física del .mp4 al disco duro.");
+    
+    if (!formData.videoFile) {
+      alert("Por favor, selecciona un archivo de vídeo .mp4 primero.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const videoData = new FormData();
+      videoData.append('file', formData.videoFile);
+
+      const uploadResponse = await streamingApi.post('/upload', videoData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const uploadedVideoPath = uploadResponse.data.videoPath; 
+
+      await catalogApi.post('/movies', {
+        title: formData.title,
+        description: formData.description,
+        year: parseInt(formData.year),
+        duration: parseInt(formData.duration),
+        posterUrl: formData.posterUrl,
+        videoPath: uploadedVideoPath, 
+        genreIds: [] 
+      });
+
+      alert("¡Película guardada y subida con éxito al servidor!");
+      navigate('/catalog');
+
+    } catch (error) {
+      console.error("Error al guardar la película:", error);
+      alert("Ha ocurrido un error al guardar la película. Revisa la consola.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -139,8 +176,12 @@ const Admin = () => {
                 </div>
               </div>
 
-              <button type="submit" className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded transition-colors text-lg cursor-pointer">
-                Guardar Película
+              <button 
+                type="submit" 
+                disabled={isSaving}
+                className="mt-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 text-white font-bold py-4 rounded transition-colors text-lg cursor-pointer"
+              >
+                {isSaving ? 'Subiendo vídeo al servidor...' : 'Guardar Película'}
               </button>
             </form>
           </div>
