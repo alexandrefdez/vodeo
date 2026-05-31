@@ -8,11 +8,15 @@ import com.tfg.streaming.catalog_service.model.Movie;
 import com.tfg.streaming.catalog_service.repository.GenreRepository;
 import com.tfg.streaming.catalog_service.repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +28,11 @@ public class CatalogService {
     private final MovieRepository movieRepository;
     private final GenreRepository genreRepository;
     private final MovieMetadataService movieMetadataService;
+
+    @Value("${streaming-service.url:http://localhost:8083/api/streaming}")
+    private String streamingServiceUrl;
+
+    private final RestClient restClient = RestClient.create();
 
     public MovieResponse createMovie(MovieRequest request) {
         Movie movie = new Movie();
@@ -71,8 +80,25 @@ public class CatalogService {
     }
 
     public void deleteMovie(Long id) {
-        movieRepository.findById(id)
+        Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Movie not found"));
+
+        if (movie.getVideoPath() != null && !movie.getVideoPath().isEmpty()) {
+            try {
+                ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
+                        .getRequestAttributes();
+                String token = attributes != null ? attributes.getRequest().getHeader("Authorization") : "";
+
+                restClient.delete()
+                        .uri(streamingServiceUrl + "/video?videoPath=" + movie.getVideoPath())
+                        .header("Authorization", token)
+                        .retrieve()
+                        .toBodilessEntity();
+            } catch (Exception e) {
+                System.err.println("Advertencia: No se pudo borrar el archivo físico del servidor de streaming.");
+            }
+        }
+
         movieRepository.deleteById(id);
     }
 

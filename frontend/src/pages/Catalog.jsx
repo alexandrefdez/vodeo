@@ -2,9 +2,10 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { catalogApi } from '../api/axiosConfig';
+import toast from 'react-hot-toast';
 
 const Catalog = () => {
-  const { logout } = useContext(AuthContext);
+  const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
   
   const [movies, setMovies] = useState([]);
@@ -13,14 +14,20 @@ const Catalog = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchMovies = async () => {
       try {
         setLoading(true);
         const response = await catalogApi.get(`/movies?page=${currentPage}&size=12`);
-        setMovies(response.data.content);
-        setTotalPages(response.data.totalPages);
+        
+        if (response.data.content.length === 0 && currentPage > 0) {
+          setCurrentPage(prev => prev - 1);
+        } else {
+          setMovies(response.data.content);
+          setTotalPages(response.data.totalPages);
+        }
         setError(null);
       } catch (err) {
         console.error(err);
@@ -31,7 +38,7 @@ const Catalog = () => {
     };
 
     fetchMovies();
-  }, [currentPage]);
+  }, [currentPage, refreshKey]);
 
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -108,12 +115,38 @@ const Catalog = () => {
                     {movie.description}
                   </p>
                   
-                  <div className="mt-auto flex flex-wrap gap-2">
-                    {movie.genres && movie.genres.map((genre, index) => (
-                      <span key={index} className="bg-slate-700 text-sky-300 text-xs px-2 py-1 rounded-full">
-                        {genre}
-                      </span>
-                    ))}
+                  <div className="mt-auto flex flex-col gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      {movie.genres && movie.genres.map((genre, index) => (
+                        <span key={index} className="bg-slate-700 text-sky-300 text-xs px-2 py-1 rounded-full">
+                          {genre}
+                        </span>
+                      ))}
+                    </div>
+
+                    {user?.role === 'ADMIN' && (
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const confirmDelete = window.confirm(`¿Estás seguro de que quieres borrar "${movie.title}" de forma permanente?`);
+                          if (confirmDelete) {
+                            const loadingToast = toast.loading("Eliminando película y archivos del servidor...");
+                            try {
+                              await catalogApi.delete(`/movies/${movie.id}`);
+                              setRefreshKey(old => old + 1);
+                              toast.dismiss(loadingToast);
+                              toast.success("Película eliminada correctamente");
+                            } catch (err) {
+                              toast.dismiss(loadingToast);
+                              toast.error("Error al eliminar la película del sistema");
+                            }
+                          }
+                        }}
+                        className="w-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 py-2 rounded font-bold transition-colors text-sm"
+                      >
+                        Eliminar Película
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

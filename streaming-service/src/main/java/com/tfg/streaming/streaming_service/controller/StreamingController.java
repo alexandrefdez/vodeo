@@ -21,12 +21,22 @@ public class StreamingController {
             @RequestHeader HttpHeaders headers) {
         try {
             ResourceRegion region = streamingService.getVideoRegion(filename, headers);
-            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT) //Codigo HTTP 206 indica que se esta enviado el trozo del video solicitado
-                    .body(region); //Metemos los bytes calculados en el body de la respuesta
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                    .body(region);
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); //Vacio porque lo recibe el reproductor de video del navegador
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); //Vacio porque lo recibe el reproductor de video del navegador
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @DeleteMapping("/video")
+    public ResponseEntity<Void> deleteVideo(@RequestParam String videoPath) {
+        try {
+            streamingService.deleteVideo(videoPath);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }
