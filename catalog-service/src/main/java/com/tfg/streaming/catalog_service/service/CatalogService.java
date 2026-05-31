@@ -8,6 +8,10 @@ import com.tfg.streaming.catalog_service.model.Movie;
 import com.tfg.streaming.catalog_service.repository.GenreRepository;
 import com.tfg.streaming.catalog_service.repository.MovieRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,11 +52,10 @@ public class CatalogService {
         return toResponse(saved);
     }
 
-    public List<MovieResponse> getAllMovies() {
-        return movieRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public Page<MovieResponse> getAllMovies(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return movieRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     public MovieResponse getMovieById(Long id) {
@@ -61,11 +64,10 @@ public class CatalogService {
         return toResponse(movie);
     }
 
-    public List<MovieResponse> searchMovies(String title) {
-        return movieRepository.findByTitleContainingIgnoreCase(title)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public Page<MovieResponse> searchMovies(String title, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return movieRepository.findByTitleContainingIgnoreCase(title, pageable)
+                .map(this::toResponse);
     }
 
     public void deleteMovie(Long id) {
