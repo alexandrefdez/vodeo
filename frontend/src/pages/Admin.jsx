@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { catalogApi, streamingApi } from '../api/axiosConfig';
+import toast from 'react-hot-toast';
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -61,11 +62,12 @@ const Admin = () => {
     e.preventDefault();
     
     if (!formData.videoFile) {
-      alert("Por favor, selecciona un archivo de vídeo .mp4 primero.");
+      toast.error("Por favor, selecciona un archivo de vídeo .mp4 primero.");
       return;
     }
 
     setIsSaving(true);
+    const loadingToast = toast.loading("Subiendo vídeo al servidor, por favor espera...");
 
     try {
       const videoData = new FormData();
@@ -87,12 +89,14 @@ const Admin = () => {
         genreIds: [] 
       });
 
-      alert("¡Película guardada y subida con éxito al servidor!");
+      toast.dismiss(loadingToast);
+      toast.success("¡Película guardada y subida con éxito!");
       navigate('/catalog');
 
     } catch (error) {
       console.error("Error al guardar la película:", error);
-      alert("Ha ocurrido un error al guardar la película. Revisa la consola.");
+      toast.dismiss(loadingToast);
+      toast.error("Error al conectar con el servidor. Inténtalo de nuevo.");
     } finally {
       setIsSaving(false);
     }

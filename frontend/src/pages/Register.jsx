@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/axiosConfig';
+import toast from 'react-hot-toast';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -21,7 +22,7 @@ const Register = () => {
         password
       });
 
-      alert("¡Cuenta creada con éxito! Ya puedes iniciar sesión.");
+      toast.success("¡Cuenta creada con éxito! Ya puedes iniciar sesión.");
       navigate('/login');
       
     } catch (err) {

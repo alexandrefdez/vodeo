@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -11,6 +12,22 @@ import AdminRoute from './components/AdminRoute';
 function App() {
   return (
     <AuthProvider>
+      <Toaster 
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            border: '1px solid #334155',
+          },
+          success: {
+            iconTheme: { primary: '#10b981', secondary: '#fff' },
+          },
+          error: {
+            iconTheme: { primary: '#ef4444', secondary: '#fff' },
+          },
+        }}
+      />
       <Router>
         <Routes>
           {/* Rutas Públicas */}
