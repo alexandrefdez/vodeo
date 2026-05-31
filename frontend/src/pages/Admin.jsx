@@ -10,6 +10,7 @@ const Admin = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchMessage, setSearchMessage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [genreInput, setGenreInput] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -17,7 +18,8 @@ const Admin = () => {
     description: '',
     duration: '',
     posterUrl: '',
-    videoFile: null
+    videoFile: null,
+    genres: [] 
   });
 
   const handleSearchTMDB = async (e) => {
@@ -38,6 +40,7 @@ const Admin = () => {
         description: movieData.description || '',
         posterUrl: movieData.posterUrl || '',
         duration: movieData.duration || '',
+        genres: movieData.genres || [], 
       });
       
       setSearchMessage({ type: 'success', text: '¡Metadatos importados con éxito!' });
@@ -56,6 +59,21 @@ const Admin = () => {
 
   const handleFileChange = (e) => {
     setFormData({ ...formData, videoFile: e.target.files[0] });
+  };
+
+  const handleAddGenre = () => {
+    const trimmed = genreInput.trim();
+    if (trimmed && !formData.genres.includes(trimmed)) {
+      setFormData({ ...formData, genres: [...formData.genres, trimmed] });
+    }
+    setGenreInput('');
+  };
+
+  const handleRemoveGenre = (genreToRemove) => {
+    setFormData({
+      ...formData,
+      genres: formData.genres.filter(g => g !== genreToRemove)
+    });
   };
 
   const handleSaveMovie = async (e) => {
@@ -86,7 +104,7 @@ const Admin = () => {
         duration: parseInt(formData.duration),
         posterUrl: formData.posterUrl,
         videoPath: uploadedVideoPath, 
-        genreIds: [] 
+        genres: formData.genres 
       });
 
       toast.dismiss(loadingToast);
@@ -169,7 +187,52 @@ const Admin = () => {
                 <textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-2">Géneros / Etiquetas</label>
+                <div className="flex gap-2 mb-3">
+                  <input 
+                    type="text" 
+                    placeholder="Ej: Thriller" 
+                    value={genreInput}
+                    onChange={(e) => setGenreInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault(); 
+                        handleAddGenre();
+                      }
+                    }}
+                    className="flex-grow p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500"
+                  />
+                  <button 
+                    type="button"
+                    onClick={handleAddGenre}
+                    className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded transition-colors cursor-pointer"
+                  >
+                    Añadir
+                  </button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {formData.genres.map((genre, index) => (
+                    <span key={index} className="flex items-center gap-2 bg-sky-500/20 text-sky-300 border border-sky-500/30 px-3 py-1 rounded-full text-sm font-semibold group">
+                      {genre}
+                      <button 
+                        type="button" 
+                        onClick={() => handleRemoveGenre(genre)}
+                        className="text-sky-300/50 group-hover:text-red-400 hover:text-red-500 focus:outline-none transition-colors"
+                        title="Eliminar género"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                  {formData.genres.length === 0 && (
+                    <span className="text-slate-500 text-sm italic">Ningún género asignado...</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-2">
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Duración (Minutos)</label>
                   <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
@@ -183,7 +246,7 @@ const Admin = () => {
               <button 
                 type="submit" 
                 disabled={isSaving}
-                className="mt-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 text-white font-bold py-4 rounded transition-colors text-lg cursor-pointer"
+                className="mt-6 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 text-white font-bold py-4 rounded transition-colors text-lg cursor-pointer"
               >
                 {isSaving ? 'Subiendo vídeo al servidor...' : 'Guardar Película'}
               </button>

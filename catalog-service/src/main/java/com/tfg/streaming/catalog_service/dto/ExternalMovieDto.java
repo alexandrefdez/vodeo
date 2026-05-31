@@ -1,6 +1,7 @@
 package com.tfg.streaming.catalog_service.dto;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class ExternalMovieDto {
@@ -9,4 +10,5 @@ public class ExternalMovieDto {
     private Integer year;
     private String posterUrl;
     private Integer duration;
+    private List<String> genres;
 }

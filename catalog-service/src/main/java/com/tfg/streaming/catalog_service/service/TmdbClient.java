@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
+
 @Service
 public class TmdbClient {
 
@@ -35,6 +37,7 @@ public class TmdbClient {
 
             TmdbMovieResult result = response.getResults().get(0);
             Integer runtime = null;
+            List<String> genreNames = null;
 
             try {
                 TmdbMovieDetails details = restClient.get()
@@ -44,6 +47,11 @@ public class TmdbClient {
 
                 if (details != null) {
                     runtime = details.getRuntime();
+                    if (details.getGenres() != null) {
+                        genreNames = details.getGenres().stream()
+                                .map(TmdbMovieDetails.Genre::getName)
+                                .toList();
+                    }
                 }
             } catch (Exception e) {
                 System.err.println("Error fetching details: " + e.getMessage());
@@ -55,6 +63,7 @@ public class TmdbClient {
             dto.setYear(parseYear(result.getReleaseDate()));
             dto.setPosterUrl(result.getPosterPath() != null ? imageBaseUrl + result.getPosterPath() : null);
             dto.setDuration(runtime);
+            dto.setGenres(genreNames);
 
             return dto;
 
