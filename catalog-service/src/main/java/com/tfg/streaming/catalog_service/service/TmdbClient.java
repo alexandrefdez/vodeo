@@ -1,6 +1,7 @@
 package com.tfg.streaming.catalog_service.service;
 
 import com.tfg.streaming.catalog_service.dto.ExternalMovieDto;
+import com.tfg.streaming.catalog_service.dto.TmdbMovieDetails;
 import com.tfg.streaming.catalog_service.dto.TmdbMovieResult;
 import com.tfg.streaming.catalog_service.dto.TmdbSearchResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,12 +34,27 @@ public class TmdbClient {
             }
 
             TmdbMovieResult result = response.getResults().get(0);
+            Integer runtime = null;
+
+            try {
+                TmdbMovieDetails details = restClient.get()
+                        .uri(baseUrl + "/movie/" + result.getId() + "?api_key=" + apiKey + "&language=es-ES")
+                        .retrieve()
+                        .body(TmdbMovieDetails.class);
+
+                if (details != null) {
+                    runtime = details.getRuntime();
+                }
+            } catch (Exception e) {
+                System.err.println("Error fetching details: " + e.getMessage());
+            }
 
             ExternalMovieDto dto = new ExternalMovieDto();
             dto.setTitle(result.getTitle());
             dto.setDescription(result.getOverview());
             dto.setYear(parseYear(result.getReleaseDate()));
             dto.setPosterUrl(result.getPosterPath() != null ? imageBaseUrl + result.getPosterPath() : null);
+            dto.setDuration(runtime);
 
             return dto;
 

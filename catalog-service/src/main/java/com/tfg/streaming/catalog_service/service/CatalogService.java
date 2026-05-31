@@ -27,6 +27,7 @@ public class CatalogService {
         movie.setYear(request.getYear());
         movie.setDuration(request.getDuration());
         movie.setPosterUrl(request.getPosterUrl());
+        movie.setVideoPath(request.getVideoPath());
 
         List<Genre> genres = genreRepository.findAllById(request.getGenreIds());
         movie.setGenres(genres);

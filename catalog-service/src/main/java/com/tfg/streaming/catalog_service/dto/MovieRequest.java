@@ -10,5 +10,6 @@ public class MovieRequest {
     private Integer year;
     private Integer duration;
     private String posterUrl;
+    private String videoPath;
     private List<Long> genreIds;
 }

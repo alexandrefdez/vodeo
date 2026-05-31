@@ -8,4 +8,5 @@ public class ExternalMovieDto {
     private String description;
     private Integer year;
     private String posterUrl;
+    private Integer duration;
 }
