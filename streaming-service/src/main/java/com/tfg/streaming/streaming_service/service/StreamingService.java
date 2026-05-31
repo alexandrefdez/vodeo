@@ -44,4 +44,15 @@ public class StreamingService {
 
         return new ResourceRegion(video, start, rangeLength);
     }
+
+    public void deleteVideo(String fileName) {
+        try {
+            Path filePath = Paths.get(storagePath).resolve(fileName).normalize();
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error al borrar el archivo físico del disco");
+        }
+    }
 }
