@@ -5,11 +5,10 @@ import com.tfg.streaming.catalog_service.dto.MovieRequest;
 import com.tfg.streaming.catalog_service.dto.MovieResponse;
 import com.tfg.streaming.catalog_service.service.CatalogService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/catalog")
@@ -24,8 +23,10 @@ public class CatalogController {
     }
 
     @GetMapping("/movies")
-    public ResponseEntity<List<MovieResponse>> getAllMovies() {
-        return ResponseEntity.ok(catalogService.getAllMovies());
+    public ResponseEntity<Page<MovieResponse>> getAllMovies(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(catalogService.getAllMovies(page, size));
     }
 
     @GetMapping("/movies/{id}")
@@ -34,8 +35,11 @@ public class CatalogController {
     }
 
     @GetMapping("/movies/search")
-    public ResponseEntity<List<MovieResponse>> searchMovies(@RequestParam String title) {
-        return ResponseEntity.ok(catalogService.searchMovies(title));
+    public ResponseEntity<Page<MovieResponse>> searchMovies(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(catalogService.searchMovies(title, page, size));
     }
 
     @DeleteMapping("/movies/{id}")
