@@ -20,4 +20,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 
     @EntityGraph(attributePaths = { "genres" })
     Page<Movie> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+
+    @EntityGraph(attributePaths = { "genres" })
+    Page<Movie> findByGenresName(String genreName, Pageable pageable);
 }

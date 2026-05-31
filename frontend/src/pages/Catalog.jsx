@@ -16,11 +16,35 @@ const Catalog = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  const [activeGenres, setActiveGenres] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('');
+
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const response = await catalogApi.get('/genres');
+        setActiveGenres(response.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchGenres();
+  }, []);
+
   useEffect(() => {
     const fetchMovies = async () => {
       try {
         setLoading(true);
-        const response = await catalogApi.get(`/movies?page=${currentPage}&size=12`);
+        let url = `/movies?page=${currentPage}&size=12`;
+
+        if (searchQuery) {
+          url = `/movies/search?title=${searchQuery}&page=${currentPage}&size=12`;
+        } else if (selectedGenre) {
+          url = `/movies/genre?genre=${selectedGenre}&page=${currentPage}&size=12`;
+        }
+
+        const response = await catalogApi.get(url);
         
         if (response.data.content.length === 0 && currentPage > 0) {
           setCurrentPage(prev => prev - 1);
@@ -38,7 +62,25 @@ const Catalog = () => {
     };
 
     fetchMovies();
-  }, [currentPage, refreshKey]);
+  }, [currentPage, refreshKey, searchQuery, selectedGenre]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSelectedGenre('');
+    setCurrentPage(0);
+  };
+
+  const handleGenreClick = (genre) => {
+    setSearchQuery('');
+    setSelectedGenre(genre);
+    setCurrentPage(0);
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedGenre('');
+    setCurrentPage(0);
+  };
 
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -54,7 +96,7 @@ const Catalog = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-10">
-      <div className="flex justify-between items-center mb-10 border-b border-slate-800 pb-4">
+      <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
         <h1 className="text-3xl font-bold text-sky-500 tracking-widest">VODEO</h1>
         <button 
           onClick={logout}
@@ -62,6 +104,45 @@ const Catalog = () => {
         >
           Cerrar Sesión
         </button>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10 bg-slate-800/50 p-6 rounded-lg border border-slate-800">
+        <form onSubmit={handleSearchSubmit} className="w-full md:w-1/3 flex">
+          <input 
+            type="text" 
+            placeholder="Buscar película por título..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-3 bg-slate-900 border border-slate-700 rounded-l focus:outline-none focus:border-sky-500"
+          />
+          <button 
+            type="submit"
+            className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 rounded-r transition-colors cursor-pointer"
+          >
+            Buscar
+          </button>
+        </form>
+
+        <div className="w-full md:w-2/3 overflow-x-auto whitespace-nowrap pb-4 custom-scrollbar">
+          <div className="flex gap-3 items-center">
+            <span className="text-slate-400 font-semibold mr-2">Categorías:</span>
+            <button
+              onClick={handleClearFilters}
+              className={`px-4 py-2 rounded-full font-semibold transition-colors border cursor-pointer ${!selectedGenre && !searchQuery ? 'bg-sky-500 text-white border-sky-500' : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-sky-500/50'}`}
+            >
+              Todos
+            </button>
+            {activeGenres.map(genre => (
+              <button
+                key={genre}
+                onClick={() => handleGenreClick(genre)}
+                className={`px-4 py-2 rounded-full font-semibold transition-colors border cursor-pointer ${selectedGenre === genre ? 'bg-sky-500 text-white border-sky-500' : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-sky-500/50'}`}
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
       
       {loading && movies.length === 0 && (
@@ -77,8 +158,15 @@ const Catalog = () => {
       )}
 
       {!loading && !error && movies.length === 0 && (
-        <div className="text-center text-slate-400 mt-20">
-          <p className="text-xl">No hay películas en el catálogo todavía.</p>
+        <div className="text-center text-slate-400 mt-20 bg-slate-800/30 p-10 rounded-lg border border-slate-800">
+          <p className="text-2xl font-bold mb-2">No hay resultados</p>
+          <p className="text-slate-500">Prueba a buscar otro título o cambiar de categoría.</p>
+          <button 
+            onClick={handleClearFilters}
+            className="mt-6 bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-2 rounded transition-colors cursor-pointer"
+          >
+            Ver todo el catálogo
+          </button>
         </div>
       )}
 
@@ -142,7 +230,7 @@ const Catalog = () => {
                             }
                           }
                         }}
-                        className="w-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 py-2 rounded font-bold transition-colors text-sm"
+                        className="w-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 py-2 rounded font-bold transition-colors text-sm cursor-pointer"
                       >
                         Eliminar Película
                       </button>
@@ -158,7 +246,7 @@ const Catalog = () => {
               <button 
                 onClick={handlePrevPage} 
                 disabled={currentPage === 0}
-                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors border border-slate-700"
+                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors border border-slate-700 cursor-pointer"
               >
                 &larr; Anterior
               </button>
@@ -170,7 +258,7 @@ const Catalog = () => {
               <button 
                 onClick={handleNextPage} 
                 disabled={currentPage >= totalPages - 1}
-                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors border border-slate-700"
+                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors border border-slate-700 cursor-pointer"
               >
                 Siguiente &rarr;
               </button>
