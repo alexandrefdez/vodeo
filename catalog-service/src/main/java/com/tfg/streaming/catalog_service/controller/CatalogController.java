@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/catalog")
 @RequiredArgsConstructor
@@ -40,6 +42,19 @@ public class CatalogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(catalogService.searchMovies(title, page, size));
+    }
+
+    @GetMapping("/movies/genre")
+    public ResponseEntity<Page<MovieResponse>> getMoviesByGenre(
+            @RequestParam String genre,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(catalogService.getMoviesByGenre(genre, page, size));
+    }
+
+    @GetMapping("/genres")
+    public ResponseEntity<List<String>> getActiveGenres() {
+        return ResponseEntity.ok(catalogService.getActiveGenres());
     }
 
     @DeleteMapping("/movies/{id}")

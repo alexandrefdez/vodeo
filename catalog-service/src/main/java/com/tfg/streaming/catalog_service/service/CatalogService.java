@@ -79,6 +79,16 @@ public class CatalogService {
                 .map(this::toResponse);
     }
 
+    public Page<MovieResponse> getMoviesByGenre(String genreName, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        return movieRepository.findByGenresName(genreName, pageable)
+                .map(this::toResponse);
+    }
+
+    public List<String> getActiveGenres() {
+        return genreRepository.findActiveGenres();
+    }
+
     public void deleteMovie(Long id) {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Movie not found"));
