@@ -71,4 +71,9 @@ public class CatalogController {
         }
         return ResponseEntity.ok(data);
     }
+
+    @GetMapping("/movies/batch")
+    public ResponseEntity<List<MovieResponse>> getMoviesByIds(@RequestParam List<Long> ids) {
+        return ResponseEntity.ok(catalogService.getMoviesByIds(ids));
+    }
 }
