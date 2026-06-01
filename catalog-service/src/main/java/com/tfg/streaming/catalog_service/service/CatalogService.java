@@ -112,6 +112,15 @@ public class CatalogService {
         movieRepository.deleteById(id);
     }
 
+    public List<MovieResponse> getMoviesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return movieRepository.findByIdIn(ids).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private MovieResponse toResponse(Movie movie) {
         MovieResponse response = new MovieResponse();
         response.setId(movie.getId());

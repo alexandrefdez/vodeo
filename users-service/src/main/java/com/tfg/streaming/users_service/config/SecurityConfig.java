@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/register", "/api/users/login").permitAll()
+                        .requestMatchers("/api/users/watchlist", "/api/users/watchlist/**")
+                        .hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

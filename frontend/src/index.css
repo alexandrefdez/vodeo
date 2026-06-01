@@ -5,23 +5,23 @@ body {
   color: white;
 }
 
-/* Scrollbar personalizada y elegante para paneles horizontales */
+/* Scrollbar personalizada para paneles horizontales */
 .custom-scrollbar::-webkit-scrollbar {
   height: 8px; /* Altura finita y sutil */
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1e293b; /* Color slate-800 (el fondo de tu panel) */
+  background: #1e293b;
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #0ea5e9; /* Color sky-500 */
+  background: #0ea5e9;
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #0284c7; /* Color sky-600 al pasar el ratón */
+  background: #0284c7;
 }
 
 /* Para Firefox */
