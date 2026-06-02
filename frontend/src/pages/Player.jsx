@@ -28,7 +28,7 @@ const Player = () => {
   // Recuperamos el token para inyectarlo en la petición del vídeo nativo
   const token = localStorage.getItem('token');
   const videoSrc = movie?.videoPath 
-    ? `http://localhost:8083/api/streaming/play/${movie.videoPath}?token=${token}` 
+    ? `${import.meta.env.VITE_STREAMING_API_URL}/play/${movie.videoPath}?token=${token}` 
     : null;
 
   return (
