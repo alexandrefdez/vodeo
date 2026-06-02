@@ -7,6 +7,7 @@ import Catalog from './pages/Catalog';
 import Player from './pages/Player';
 import Admin from './pages/Admin';
 import Watchlist from './pages/Watchlist';
+import Profile from './pages/Profile';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -61,6 +62,14 @@ function App() {
               </PrivateRoute>
             } 
             />
+            <Route 
+            path="/profile"  
+            element={
+              <PrivateRoute>
+                <Profile />
+              </PrivateRoute>
+            } 
+          />
 
           {/* Rutas de Administración */}
           <Route 
