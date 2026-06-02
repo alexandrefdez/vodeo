@@ -6,21 +6,21 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      # Configuración Global de CORS
       globalcors:
         corsConfigurations:
-          '[/**]': 
-            allowedOrigins: "http://localhost:5173"
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
             allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-            allowedHeaders: "*"
-            exposedHeaders: "*"
-
-      # Enrutamiento de Microservicios
+              - "GET"
+              - "POST"
+              - "PUT"
+              - "DELETE"
+              - "OPTIONS"
+            allowedHeaders:
+              - "*"
+            exposedHeaders:
+              - "*"
       routes:
         - id: users-service
           uri: http://localhost:8081

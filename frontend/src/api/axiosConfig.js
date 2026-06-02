@@ -15,7 +15,7 @@ export const catalogApi = axios.create({
 });
 
 export const streamingApi = axios.create({
-  baseURL: 'http://localhost:8083/api/streaming',
+  baseURL: import.meta.env.VITE_STREAMING_API_URL,
 });
 
 catalogApi.interceptors.request.use(
