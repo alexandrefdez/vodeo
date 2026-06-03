@@ -157,6 +157,45 @@ public class TmdbClient {
         }
     }
 
+    // ==========================================
+    // EXTRAER EPISODIO ESPECÍFICO
+    // ==========================================
+    public ExternalEpisodeDto fetchEpisodeData(String seriesTitle, Integer seasonNumber, Integer episodeNumber) {
+        try {
+            // Buscamos la serie para obtener su ID interno en TMDB
+            TmdbSeriesSearchResponse searchRes = restClient.get()
+                    .uri(baseUrl + "/search/tv?api_key=" + apiKey + "&query=" + seriesTitle.replace(" ", "+")
+                            + "&language=es-ES")
+                    .retrieve()
+                    .body(TmdbSeriesSearchResponse.class);
+
+            if (searchRes == null || searchRes.getResults() == null || searchRes.getResults().isEmpty()) {
+                return null;
+            }
+            Long tmdbId = searchRes.getResults().get(0).getId();
+
+            // Extraemos los detalles exactos de ese episodio
+            TmdbEpisodeDetails epDetails = restClient.get()
+                    .uri(baseUrl + "/tv/" + tmdbId + "/season/" + seasonNumber + "/episode/" + episodeNumber
+                            + "?api_key=" + apiKey + "&language=es-ES")
+                    .retrieve()
+                    .body(TmdbEpisodeDetails.class);
+
+            if (epDetails != null) {
+                ExternalEpisodeDto dto = new ExternalEpisodeDto();
+                dto.setTitle(epDetails.getName());
+                dto.setDescription(epDetails.getOverview());
+                // TMDB a veces no tiene el runtime de un episodio suelto, por precaución
+                // ponemos 0 si es nulo
+                dto.setDuration(epDetails.getRuntime() != null ? epDetails.getRuntime() : 0);
+                return dto;
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetchEpisodeData TMDB: " + e.getMessage());
+        }
+        return null;
+    }
+
     private Integer parseYear(String releaseDate) {
         if (releaseDate == null || releaseDate.length() < 4)
             return null;

@@ -1,5 +1,6 @@
 package com.tfg.streaming.catalog_service.service;
 
+import com.tfg.streaming.catalog_service.dto.ExternalEpisodeDto;
 import com.tfg.streaming.catalog_service.dto.ExternalMovieDto;
 import com.tfg.streaming.catalog_service.dto.ExternalSeriesDto;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,9 @@ public class MovieMetadataService {
             series = omdbClient.searchSeries(title);
         }
         return series;
+    }
+
+    public ExternalEpisodeDto fetchEpisodeData(String seriesTitle, Integer seasonNumber, Integer episodeNumber) {
+        return tmdbClient.fetchEpisodeData(seriesTitle, seasonNumber, episodeNumber);
     }
 }

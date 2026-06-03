@@ -148,6 +148,18 @@ public class CatalogController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/series/fetch-episode")
+    public ResponseEntity<ExternalEpisodeDto> fetchEpisodeData(
+            @RequestParam String seriesTitle,
+            @RequestParam Integer seasonNumber,
+            @RequestParam Integer episodeNumber) {
+        ExternalEpisodeDto data = catalogService.fetchEpisodeData(seriesTitle, seasonNumber, episodeNumber);
+        if (data == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(data);
+    }
+
     // ==========================================
     // GLOBAL
     // ==========================================

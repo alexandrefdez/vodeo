@@ -25,6 +25,7 @@ const SeriesDetails = () => {
   const [showEpisodeForm, setShowEpisodeForm] = useState(false);
   const [episodeData, setEpisodeData] = useState({ number: '', title: '', description: '', duration: '', file: null });
   const [isUploading, setIsUploading] = useState(false);
+  const [isFetchingMetadata, setIsFetchingMetadata] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +76,35 @@ const SeriesDetails = () => {
       setNewSeasonNumber('');
       toast.success("Temporada creada");
     } catch (err) { toast.error("Error al crear temporada"); }
+  };
+
+  const handleAutoFetchEpisode = async () => {
+    if (!episodeData.number) return;
+    
+    setIsFetchingMetadata(true);
+    const loadingToast = toast.loading("Buscando metadatos en TMDB...");
+    
+    try {
+      const activeSeason = seasons.find(s => s.id === activeSeasonId);
+      const response = await catalogApi.get(
+        `/series/fetch-episode?seriesTitle=${series.title}&seasonNumber=${activeSeason.seasonNumber}&episodeNumber=${episodeData.number}`
+      );
+      
+      setEpisodeData(prev => ({
+        ...prev,
+        title: response.data.title || '',
+        description: response.data.description || '',
+        duration: response.data.duration || ''
+      }));
+      
+      toast.dismiss(loadingToast);
+      toast.success("¡Datos completados!");
+    } catch (err) {
+      toast.dismiss(loadingToast);
+      toast.error("No se encontró ese episodio en TMDB");
+    } finally {
+      setIsFetchingMetadata(false);
+    }
   };
 
   const handleCreateEpisode = async (e) => {
@@ -215,23 +245,40 @@ const SeriesDetails = () => {
                   {/* Formulario Admin: Subir Episodio */}
                   {showEpisodeForm && (
                     <form onSubmit={handleCreateEpisode} className="bg-slate-800 p-6 rounded-lg border border-emerald-500/30 flex flex-col gap-4">
-                      <div className="flex gap-4">
-                        <input type="number" placeholder="Nº Ep." value={episodeData.number} onChange={e => setEpisodeData({...episodeData, number: e.target.value})} className="w-24 p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" required />
-                        <input type="text" placeholder="Título del Episodio" value={episodeData.title} onChange={e => setEpisodeData({...episodeData, title: e.target.value})} className="flex-grow p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" required />
-                        <input type="number" placeholder="Minutos" value={episodeData.duration} onChange={e => setEpisodeData({...episodeData, duration: e.target.value})} className="w-24 p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" required />
+                      <div className="flex gap-4 items-end">
+                        <div className="flex flex-col w-32 shrink-0">
+                          <label className="text-xs text-slate-400 mb-1">Nº Ep.</label>
+                          <div className="flex gap-2">
+                            <input type="number" placeholder="Ej: 1" value={episodeData.number} onChange={e => setEpisodeData({...episodeData, number: e.target.value})} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" required />
+                            <button type="button" onClick={handleAutoFetchEpisode} disabled={isFetchingMetadata || !episodeData.number} className="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/50 px-3 py-2 rounded font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" title="Autocompletar datos desde TMDB">
+                              {isFetchingMetadata ? '⏳' : '✨'}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex flex-col flex-grow">
+                          <label className="text-xs text-slate-400 mb-1">Título del Episodio</label>
+                          <input type="text" placeholder="Ej: Piloto" value={episodeData.title} onChange={e => setEpisodeData({...episodeData, title: e.target.value})} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" required />
+                        </div>
+                        <div className="flex flex-col w-24 shrink-0">
+                          <label className="text-xs text-slate-400 mb-1">Minutos</label>
+                          <input type="number" placeholder="Ej: 45" value={episodeData.duration} onChange={e => setEpisodeData({...episodeData, duration: e.target.value})} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" required />
+                        </div>
                       </div>
-                      <textarea placeholder="Sinopsis..." value={episodeData.description} onChange={e => setEpisodeData({...episodeData, description: e.target.value})} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" rows="2" required />
+                      <div className="flex flex-col">
+                        <label className="text-xs text-slate-400 mb-1">Sinopsis</label>
+                        <textarea placeholder="Sinopsis..." value={episodeData.description} onChange={e => setEpisodeData({...episodeData, description: e.target.value})} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" rows="2" required />
+                      </div>
                       
                       {/* BOTÓN DE SELECCIÓN DE VÍDEO ARREGLADO */}
                       <input 
                         type="file" 
                         accept="video/mp4" 
                         onChange={e => setEpisodeData({...episodeData, file: e.target.files[0]})} 
-                        className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-emerald-500 file:text-white hover:file:bg-emerald-600 cursor-pointer" 
+                        className="w-full p-2 mt-2 bg-slate-900 border border-slate-700 rounded text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-emerald-500 file:text-white hover:file:bg-emerald-600 cursor-pointer" 
                         required 
                       />
 
-                      <button type="submit" disabled={isUploading} className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 py-3 rounded font-bold transition-colors cursor-pointer">
+                      <button type="submit" disabled={isUploading} className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 mt-2 py-3 rounded font-bold transition-colors cursor-pointer text-lg shadow-lg">
                         {isUploading ? 'Procesando y Subiendo vídeo...' : 'Publicar Episodio'}
                       </button>
                     </form>

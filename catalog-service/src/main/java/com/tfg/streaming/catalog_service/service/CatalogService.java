@@ -231,6 +231,10 @@ public class CatalogService {
         }
     }
 
+    public ExternalEpisodeDto fetchEpisodeData(String seriesTitle, Integer seasonNumber, Integer episodeNumber) {
+        return movieMetadataService.fetchEpisodeData(seriesTitle, seasonNumber, episodeNumber);
+    }
+
     private MovieResponse toMovieResponse(Movie movie) {
         MovieResponse response = new MovieResponse();
         response.setId(movie.getId());
