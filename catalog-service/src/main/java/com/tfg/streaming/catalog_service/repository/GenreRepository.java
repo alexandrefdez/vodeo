@@ -12,6 +12,6 @@ import java.util.Optional;
 public interface GenreRepository extends JpaRepository<Genre, Long> {
     Optional<Genre> findByName(String name);
 
-    @Query("SELECT DISTINCT g.name FROM Genre g JOIN g.movies m")
+    @Query("SELECT DISTINCT g.name FROM Genre g WHERE SIZE(g.movies) > 0 OR SIZE(g.series) > 0")
     List<String> findActiveGenres();
 }

@@ -1,5 +1,6 @@
 package com.tfg.streaming.users_service.service;
 
+import com.tfg.streaming.users_service.dto.WatchlistItemDto;
 import com.tfg.streaming.users_service.model.User;
 import com.tfg.streaming.users_service.model.Watchlist;
 import com.tfg.streaming.users_service.repository.UserRepository;
@@ -18,27 +19,28 @@ public class WatchlistService {
     private final WatchlistRepository watchlistRepository;
     private final UserRepository userRepository;
 
-    public void toggleWatchlist(String email, Long movieId) {
+    public void toggleWatchlist(String email, Long mediaId, String mediaType) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        Optional<Watchlist> existing = watchlistRepository.findByUserAndMovieId(user, movieId);
+        Optional<Watchlist> existing = watchlistRepository.findByUserAndMediaIdAndMediaType(user, mediaId, mediaType);
 
         if (existing.isPresent()) {
             watchlistRepository.delete(existing.get());
         } else {
             Watchlist watchlist = new Watchlist();
             watchlist.setUser(user);
-            watchlist.setMovieId(movieId);
+            watchlist.setMediaId(mediaId);
+            watchlist.setMediaType(mediaType);
             watchlistRepository.save(watchlist);
         }
     }
 
-    public Page<Long> getUserWatchlist(String email, int page, int size) {
+    public Page<WatchlistItemDto> getUserWatchlist(String email, int page, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         return watchlistRepository.findByUserOrderByIdDesc(user, PageRequest.of(page, size))
-                .map(Watchlist::getMovieId);
+                .map(w -> new WatchlistItemDto(w.getMediaId(), w.getMediaType()));
     }
 }

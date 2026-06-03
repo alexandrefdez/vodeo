@@ -1,6 +1,7 @@
 package com.tfg.streaming.catalog_service.service;
 
 import com.tfg.streaming.catalog_service.dto.ExternalMovieDto;
+import com.tfg.streaming.catalog_service.dto.ExternalSeriesDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,15 @@ public class MovieMetadataService {
         if (movies == null || movies.isEmpty()) {
             movies = omdbClient.searchMovies(title);
         }
-
         return movies;
+    }
+
+    public List<ExternalSeriesDto> fetchSeriesData(String title) {
+        List<ExternalSeriesDto> series = tmdbClient.searchSeries(title);
+
+        if (series == null || series.isEmpty()) {
+            series = omdbClient.searchSeries(title);
+        }
+        return series;
     }
 }

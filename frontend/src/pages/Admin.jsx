@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 const Admin = () => {
   const navigate = useNavigate();
 
+  const [contentType, setContentType] = useState('movie'); // 'movie' o 'series'
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchMessage, setSearchMessage] = useState(null);
@@ -28,31 +30,32 @@ const Admin = () => {
     setSearchResults([]);
 
     try {
-      const response = await catalogApi.get(`/movies/fetch?title=${searchQuery}`);
+      const endpoint = contentType === 'movie' ? '/movies/fetch' : '/series/fetch';
+      const response = await catalogApi.get(`${endpoint}?title=${searchQuery}`);
       setSearchResults(response.data);
       setSearchMessage({ type: 'success', text: `Se encontraron ${response.data.length} coincidencias. Elige una.` });
     } catch (error) {
       console.error(error);
-      setSearchMessage({ type: 'error', text: 'No se encontró ninguna película con ese título.' });
+      setSearchMessage({ type: 'error', text: `No se encontró ninguna ${contentType === 'movie' ? 'película' : 'serie'} con ese título.` });
     } finally {
       setIsSearching(false);
     }
   };
 
-  const handleSelectMovie = (movieData) => {
+  const handleSelectMovie = (data) => {
     setFormData({
       ...formData,
-      title: movieData.title || '',
-      year: movieData.year || '',
-      description: movieData.description || '',
-      posterUrl: movieData.posterUrl || '',
-      backdropUrl: movieData.backdropUrl || '',
-      tmdbRating: movieData.tmdbRating || '',
-      contentRating: movieData.contentRating || '',
-      director: movieData.director || '',
-      castCrew: movieData.castCrew || '',
-      duration: movieData.duration || '',
-      genres: movieData.genres || [], 
+      title: data.title || '',
+      year: data.year || data.startYear || '', 
+      description: data.description || '',
+      posterUrl: data.posterUrl || '',
+      backdropUrl: data.backdropUrl || '',
+      tmdbRating: data.tmdbRating || '',
+      contentRating: data.contentRating || '',
+      director: data.director || '',
+      castCrew: data.castCrew || '',
+      duration: data.duration || '',
+      genres: data.genres || [], 
     });
     setSearchResults([]);
     toast.success("Datos precargados en el formulario");
@@ -82,46 +85,57 @@ const Admin = () => {
   const handleSaveMovie = async (e) => {
     e.preventDefault();
     
-    if (!formData.videoFile) {
+    if (contentType === 'movie' && !formData.videoFile) {
       toast.error("Por favor, selecciona un archivo de vídeo .mp4 primero.");
       return;
     }
 
     setIsSaving(true);
-    const loadingToast = toast.loading("Subiendo vídeo al servidor, por favor espera...");
+    const loadingToast = toast.loading(`Guardando ${contentType === 'movie' ? 'película' : 'serie'}...`);
 
     try {
-      const videoData = new FormData();
-      videoData.append('file', formData.videoFile);
+      let uploadedVideoPath = null;
 
-      const uploadResponse = await streamingApi.post('/upload', videoData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      if (contentType === 'movie') {
+        toast.loading("Subiendo vídeo al servidor...", { id: loadingToast });
+        const videoData = new FormData();
+        videoData.append('file', formData.videoFile);
 
-      const uploadedVideoPath = uploadResponse.data.videoPath; 
+        const uploadResponse = await streamingApi.post('/upload', videoData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        uploadedVideoPath = uploadResponse.data.videoPath; 
+      }
 
-      await catalogApi.post('/movies', {
+      const payload = {
         title: formData.title,
         description: formData.description,
-        year: parseInt(formData.year),
-        duration: parseInt(formData.duration),
         posterUrl: formData.posterUrl,
         backdropUrl: formData.backdropUrl,
         tmdbRating: parseFloat(formData.tmdbRating),
         contentRating: formData.contentRating,
         director: formData.director,
         castCrew: formData.castCrew,
-        videoPath: uploadedVideoPath, 
         genres: formData.genres 
-      });
+      };
+
+      if (contentType === 'movie') {
+        payload.year = parseInt(formData.year);
+        payload.duration = parseInt(formData.duration);
+        payload.videoPath = uploadedVideoPath;
+        await catalogApi.post('/movies', payload);
+      } else {
+        payload.startYear = parseInt(formData.year);
+        await catalogApi.post('/series', payload);
+      }
 
       toast.dismiss(loadingToast);
-      toast.success("¡Película guardada y subida con éxito!");
+      toast.success(`¡${contentType === 'movie' ? 'Película' : 'Serie'} guardada con éxito!`);
       navigate('/catalog');
     } catch (error) {
-      console.error("Error al guardar la película:", error);
+      console.error("Error al guardar:", error);
       toast.dismiss(loadingToast);
-      toast.error("Error al conectar con el servidor. Inténtalo de nuevo.");
+      toast.error("Error al conectar con el servidor.");
     } finally {
       setIsSaving(false);
     }
@@ -131,6 +145,22 @@ const Admin = () => {
     <div className="min-h-screen bg-slate-900 text-white p-10">
       <div className="flex justify-between items-center mb-10 border-b border-slate-800 pb-4 max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-sky-500 tracking-widest">PANEL DE CONTROL</h1>
+        
+        <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+          <button
+            onClick={() => { setContentType('movie'); setSearchResults([]); }}
+            className={`px-6 py-2 rounded-md font-bold transition-all cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+          >
+            Películas
+          </button>
+          <button
+            onClick={() => { setContentType('series'); setSearchResults([]); }}
+            className={`px-6 py-2 rounded-md font-bold transition-all cursor-pointer ${contentType === 'series' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+          >
+            Series
+          </button>
+        </div>
+
         <button 
           onClick={() => navigate('/catalog')}
           className="text-slate-400 hover:text-white transition-colors border border-slate-700 px-4 py-2 rounded cursor-pointer"
@@ -144,15 +174,17 @@ const Admin = () => {
         {/* BUSCADOR */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl">
-            <h2 className="text-lg font-bold text-sky-400 mb-4">1. Importar Metadatos</h2>
+            <h2 className={`text-lg font-bold mb-4 ${contentType === 'movie' ? 'text-sky-400' : 'text-emerald-400'}`}>
+              1. Importar Metadatos
+            </h2>
             <form onSubmit={handleSearchTMDB} className="flex flex-col gap-3">
               <input
-                type="text" placeholder="Ej: Matrix" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500"
+                type="text" placeholder={`Ej: ${contentType === 'movie' ? 'Matrix' : 'Breaking Bad'}`} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`}
               />
               <button 
                 type="submit" disabled={isSearching}
-                className="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-700 text-white font-bold py-2 px-4 rounded transition-colors cursor-pointer"
+                className={`text-white font-bold py-2 px-4 rounded transition-colors cursor-pointer disabled:bg-slate-700 ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
               >
                 {isSearching ? 'Buscando...' : 'Buscar'}
               </button>
@@ -172,12 +204,12 @@ const Admin = () => {
                 {searchResults.map((result, index) => (
                   <div 
                     key={index} onClick={() => handleSelectMovie(result)}
-                    className="flex items-center gap-3 bg-slate-900 p-2 rounded border border-slate-700 hover:border-sky-500 hover:bg-slate-800 cursor-pointer transition-colors"
+                    className={`flex items-center gap-3 bg-slate-900 p-2 rounded border border-slate-700 hover:bg-slate-800 cursor-pointer transition-colors ${contentType === 'movie' ? 'hover:border-sky-500' : 'hover:border-emerald-500'}`}
                   >
                     <img src={result.posterUrl || 'https://via.placeholder.com/50x75?text=NA'} alt="poster" className="w-12 h-16 object-cover rounded" />
                     <div className="flex flex-col overflow-hidden">
-                      <span className="font-bold text-sm truncate text-sky-300">{result.title}</span>
-                      <span className="text-xs text-slate-400">{result.year} • {result.director || 'Sin director'}</span>
+                      <span className={`font-bold text-sm truncate ${contentType === 'movie' ? 'text-sky-300' : 'text-emerald-300'}`}>{result.title}</span>
+                      <span className="text-xs text-slate-400">{result.year || result.startYear} • {result.director || 'Sin creador'}</span>
                     </div>
                   </div>
                 ))}
@@ -196,34 +228,36 @@ const Admin = () => {
         {/* FORMULARIO */}
         <div className="lg:col-span-2">
           <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl">
-            <h2 className="text-lg font-bold text-sky-400 mb-6">2. Revisar y Subir</h2>
+            <h2 className={`text-lg font-bold mb-6 ${contentType === 'movie' ? 'text-sky-400' : 'text-emerald-400'}`}>
+              2. Revisar y Subir
+            </h2>
             <form onSubmit={handleSaveMovie} className="flex flex-col gap-5">
               
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-3">
                   <label className="block text-sm text-slate-400 mb-1">Título</label>
-                  <input type="text" name="title" value={formData.title} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
+                  <input type="text" name="title" value={formData.title} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} required />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-sm text-slate-400 mb-1">Año</label>
-                  <input type="number" name="year" value={formData.year} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
+                  <label className="block text-sm text-slate-400 mb-1">{contentType === 'movie' ? 'Año' : 'Año Inicio'}</label>
+                  <input type="number" name="year" value={formData.year} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Director</label>
-                  <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" />
+                  <label className="block text-sm text-slate-400 mb-1">{contentType === 'movie' ? 'Director' : 'Creador'}</label>
+                  <input type="text" name="director" value={formData.director} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} />
                 </div>
                 <div>
                   <label className="block text-sm text-slate-400 mb-1">Reparto principal</label>
-                  <input type="text" name="castCrew" value={formData.castCrew} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" />
+                  <input type="text" name="castCrew" value={formData.castCrew} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Sinopsis</label>
-                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
+                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} required />
               </div>
 
               <div>
@@ -232,7 +266,7 @@ const Admin = () => {
                   <input 
                     type="text" placeholder="Ej: Thriller" value={genreInput} onChange={(e) => setGenreInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddGenre(); } }}
-                    className="flex-grow p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500"
+                    className={`flex-grow p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`}
                   />
                   <button type="button" onClick={handleAddGenre} className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded transition-colors">
                     Añadir
@@ -241,12 +275,12 @@ const Admin = () => {
                 
                 <div className="flex flex-wrap gap-2">
                   {formData.genres.map((genre, index) => (
-                    <span key={index} className="flex items-center gap-2 bg-sky-500/20 text-sky-300 border border-sky-500/30 px-3 py-1 rounded-full text-sm font-semibold group">
+                    <span key={index} className={`flex items-center gap-2 bg-slate-800 border px-3 py-1 rounded-full text-sm font-semibold group ${contentType === 'movie' ? 'text-sky-300 border-sky-500/30' : 'text-emerald-300 border-emerald-500/30'}`}>
                       {genre}
                       <button 
                         type="button" 
                         onClick={() => handleRemoveGenre(genre)}
-                        className="text-sky-300/50 group-hover:text-red-400 hover:text-red-500 focus:outline-none transition-colors cursor-pointer"
+                        className={`group-hover:text-red-400 hover:text-red-500 focus:outline-none transition-colors cursor-pointer ${contentType === 'movie' ? 'text-sky-300/50' : 'text-emerald-300/50'}`}
                         title="Eliminar género"
                       >
                         ✕
@@ -266,22 +300,27 @@ const Admin = () => {
                   <label className="block text-xs text-slate-500 mb-1">Edad</label>
                   <input type="text" value={formData.contentRating} readOnly className="w-full p-2 bg-slate-900/50 border border-slate-800 rounded text-slate-400 text-sm" />
                 </div>
-                <div className="col-span-1">
-                  <label className="block text-sm text-slate-400 mb-1">Dur. (Min)</label>
-                  <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="w-full p-2 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
-                </div>
+                
+                {contentType === 'movie' && (
+                  <div className="col-span-1">
+                    <label className="block text-sm text-slate-400 mb-1">Dur. (Min)</label>
+                    <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="w-full p-2 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-sky-400 mt-2 mb-2">Archivo de vídeo (.mp4)</label>
-                <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full p-2 bg-slate-900 border border-sky-500/50 rounded text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-sky-500 file:text-white hover:file:bg-sky-600" required />
-              </div>
+              {contentType === 'movie' && (
+                <div>
+                  <label className="block text-sm font-bold text-sky-400 mt-2 mb-2">Archivo de vídeo (.mp4)</label>
+                  <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full p-2 bg-slate-900 border border-sky-500/50 rounded text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-sky-500 file:text-white hover:file:bg-sky-600" required />
+                </div>
+              )}
 
               <button 
                 type="submit" disabled={isSaving}
-                className="mt-6 bg-sky-500 hover:bg-sky-600 disabled:bg-slate-700 text-white font-bold py-4 rounded shadow-lg text-lg cursor-pointer transition-all"
+                className={`mt-6 text-white font-bold py-4 rounded shadow-lg text-lg cursor-pointer transition-all disabled:bg-slate-700 ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
               >
-                {isSaving ? 'Procesando y Subiendo al Servidor...' : 'Publicar Película'}
+                {isSaving ? 'Procesando...' : `Publicar ${contentType === 'movie' ? 'Película' : 'Serie'}`}
               </button>
             </form>
           </div>

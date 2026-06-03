@@ -9,6 +9,7 @@ import Admin from './pages/Admin';
 import Watchlist from './pages/Watchlist';
 import Profile from './pages/Profile';
 import MovieDetails from './pages/MovieDetails';
+import SeriesDetails from './pages/SeriesDetails';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -48,13 +49,21 @@ function App() {
             } 
           />
           <Route 
-            path="/player/:id" 
+            path="/player/movie/:id" 
             element={
               <PrivateRoute>
                 <Player />
               </PrivateRoute>
             } 
           />
+          <Route 
+            path="/player/episode/:id" 
+            element={
+              <PrivateRoute>
+                <Player />
+              </PrivateRoute>
+            } 
+            />
           <Route 
             path="/details/movie/:id" 
             element={
@@ -64,9 +73,17 @@ function App() {
             } 
           />
           <Route 
+            path="/details/series/:id" 
+            element={
+              <PrivateRoute>
+                <SeriesDetails />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
             path="/watchlist"  
-            element=
-              {<PrivateRoute>
+            element={
+              <PrivateRoute>
                 <Watchlist />
               </PrivateRoute>
             } 

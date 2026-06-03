@@ -14,19 +14,16 @@ const MovieDetails = () => {
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // 1. Cargar la película y comprobar si está en Mi Lista
   useEffect(() => {
     const fetchDetails = async () => {
       try {
         setLoading(true);
-        // Pedimos los datos de la película
         const movieRes = await catalogApi.get(`/movies/${id}`);
         setMovie(movieRes.data);
 
-        // Comprobamos si el usuario la tiene en su Watchlist
         const watchlistRes = await authApi.get(`/watchlist?page=0&size=1000`);
-        const savedIds = watchlistRes.data.content || [];
-        setIsFavorite(savedIds.includes(parseInt(id)));
+        const savedKeys = watchlistRes.data.content.map(w => `${w.mediaType}-${w.mediaId}`);
+        setIsFavorite(savedKeys.includes(`movie-${id}`));
 
       } catch (err) {
         console.error(err);
@@ -38,10 +35,9 @@ const MovieDetails = () => {
     fetchDetails();
   }, [id]);
 
-  // 2. Función para añadir/quitar de favoritos desde esta pantalla
   const handleToggleWatchlist = async () => {
     const previousState = isFavorite;
-    setIsFavorite(!isFavorite); // Optimistic UI
+    setIsFavorite(!isFavorite); 
     
     if (previousState) {
       toast.success("Eliminada de Mi Lista", { icon: '💔' });
@@ -50,9 +46,9 @@ const MovieDetails = () => {
     }
 
     try {
-      await authApi.post(`/watchlist/${id}`);
+      await authApi.post(`/watchlist/movie/${id}`);
     } catch (err) {
-      setIsFavorite(previousState); // Revertimos si falla el backend
+      setIsFavorite(previousState); 
       toast.error("Error al sincronizar con el servidor");
     }
   };
@@ -74,7 +70,6 @@ const MovieDetails = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-white relative">
       
-      {/* BOTÓN VOLVER (Z-INDEX ALTO PARA QUE ESTÉ POR ENCIMA DEL FONDO) */}
       <div className="absolute top-6 left-6 z-50">
         <button 
           onClick={() => navigate('/catalog')}
@@ -84,22 +79,18 @@ const MovieDetails = () => {
         </button>
       </div>
 
-      {/* BANNER GIGANTE CON GRADIENTE (El fondo difuminado) */}
       <div 
         className="w-full h-[60vh] lg:h-[75vh] bg-cover bg-center bg-no-repeat relative"
         style={{ 
           backgroundImage: `url(${movie.backdropUrl || movie.posterUrl})`,
         }}
       >
-        {/* Este div hace el efecto de sombra para que el texto se lea bien */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>
       </div>
 
-      {/* CONTENEDOR PRINCIPAL SUPERPUESTO AL GRADIENTE */}
       <div className="max-w-6xl mx-auto px-8 relative -mt-32 lg:-mt-64 z-10 pb-20">
         <div className="flex flex-col md:flex-row gap-10">
           
-          {/* COLUMNA IZQUIERDA: PÓSTER */}
           <div className="hidden md:block shrink-0">
             <img 
               src={movie.posterUrl} 
@@ -108,15 +99,12 @@ const MovieDetails = () => {
             />
           </div>
 
-          {/* COLUMNA DERECHA: DATOS DE LA PELÍCULA */}
           <div className="flex flex-col justify-end pt-4">
             
-            {/* Título GIGANTE */}
             <h1 className="text-5xl lg:text-7xl font-bold text-white drop-shadow-lg mb-4">
               {movie.title}
             </h1>
 
-            {/* Fila de Metadatos (Año, Duración, Edad, Nota) */}
             <div className="flex flex-wrap items-center gap-4 text-sm font-semibold text-slate-300 mb-8">
               <span className="text-emerald-400 font-bold">{movie.tmdbRating ? `⭐ ${movie.tmdbRating.toFixed(1)}` : '⭐ N/A'}</span>
               <span>{movie.year}</span>
@@ -128,12 +116,10 @@ const MovieDetails = () => {
               )}
             </div>
 
-            {/* Sinopsis */}
             <p className="text-lg text-slate-300 leading-relaxed max-w-3xl mb-8 drop-shadow">
               {movie.description}
             </p>
 
-            {/* Géneros */}
             <div className="flex flex-wrap gap-2 mb-8">
               {movie.genres && movie.genres.map(genre => (
                 <span key={genre} className="bg-slate-800/80 border border-slate-600 px-4 py-1 rounded-full text-sm text-sky-300">
@@ -142,7 +128,6 @@ const MovieDetails = () => {
               ))}
             </div>
 
-            {/* Botones de Acción (Play y Favoritos) */}
             <div className="flex items-center gap-4 mb-10">
               <button 
                 onClick={() => navigate(`/player/${movie.id}`)}
@@ -160,7 +145,6 @@ const MovieDetails = () => {
               </button>
             </div>
 
-            {/* Equipo (Director y Reparto) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm border-t border-slate-700/50 pt-6">
               <div>
                 <span className="text-slate-500 block mb-1">Director</span>

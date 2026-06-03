@@ -13,16 +13,15 @@ import java.util.Optional;
 @Repository
 public interface SeriesRepository extends JpaRepository<Series, Long> {
 
-    @EntityGraph(attributePaths = { "genres", "seasons" })
+    @EntityGraph(attributePaths = { "genres" })
     Page<Series> findAll(Pageable pageable);
 
-    @EntityGraph(attributePaths = { "genres", "seasons", "seasons.episodes" })
+    @EntityGraph(attributePaths = { "genres" })
     Optional<Series> findById(Long id);
 
     @EntityGraph(attributePaths = { "genres" })
     Page<Series> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 
-    // Metodos para filtrar por genero y watchlist
     @EntityGraph(attributePaths = { "genres" })
     Page<Series> findByGenresName(String genreName, Pageable pageable);
 
