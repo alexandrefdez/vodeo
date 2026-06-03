@@ -64,9 +64,9 @@ public class CatalogController {
     }
 
     @GetMapping("/movies/fetch")
-    public ResponseEntity<ExternalMovieDto> fetchMovieData(@RequestParam String title) {
-        ExternalMovieDto data = catalogService.fetchMovieData(title);
-        if (data == null) {
+    public ResponseEntity<List<ExternalMovieDto>> fetchMovieData(@RequestParam String title) {
+        List<ExternalMovieDto> data = catalogService.fetchMovieData(title);
+        if (data == null || data.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(data);

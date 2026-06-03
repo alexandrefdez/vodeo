@@ -11,15 +11,12 @@ const Admin = () => {
   const [searchMessage, setSearchMessage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [genreInput, setGenreInput] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
   const [formData, setFormData] = useState({
-    title: '',
-    year: '',
-    description: '',
-    duration: '',
-    posterUrl: '',
-    videoFile: null,
-    genres: [] 
+    title: '', year: '', description: '', duration: '',
+    posterUrl: '', backdropUrl: '', tmdbRating: '', contentRating: '',
+    director: '', castCrew: '', videoFile: null, genres: [] 
   });
 
   const handleSearchTMDB = async (e) => {
@@ -28,28 +25,37 @@ const Admin = () => {
 
     setIsSearching(true);
     setSearchMessage(null);
+    setSearchResults([]);
 
     try {
       const response = await catalogApi.get(`/movies/fetch?title=${searchQuery}`);
-      const movieData = response.data;
-      
-      setFormData({
-        ...formData,
-        title: movieData.title || '',
-        year: movieData.year || '',
-        description: movieData.description || '',
-        posterUrl: movieData.posterUrl || '',
-        duration: movieData.duration || '',
-        genres: movieData.genres || [], 
-      });
-      
-      setSearchMessage({ type: 'success', text: '¡Metadatos importados con éxito!' });
+      setSearchResults(response.data);
+      setSearchMessage({ type: 'success', text: `Se encontraron ${response.data.length} coincidencias. Elige una.` });
     } catch (error) {
       console.error(error);
-      setSearchMessage({ type: 'error', text: 'No se encontró la película.' });
+      setSearchMessage({ type: 'error', text: 'No se encontró ninguna película con ese título.' });
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleSelectMovie = (movieData) => {
+    setFormData({
+      ...formData,
+      title: movieData.title || '',
+      year: movieData.year || '',
+      description: movieData.description || '',
+      posterUrl: movieData.posterUrl || '',
+      backdropUrl: movieData.backdropUrl || '',
+      tmdbRating: movieData.tmdbRating || '',
+      contentRating: movieData.contentRating || '',
+      director: movieData.director || '',
+      castCrew: movieData.castCrew || '',
+      duration: movieData.duration || '',
+      genres: movieData.genres || [], 
+    });
+    setSearchResults([]);
+    toast.success("Datos precargados en el formulario");
   };
 
   const handleInputChange = (e) => {
@@ -70,10 +76,7 @@ const Admin = () => {
   };
 
   const handleRemoveGenre = (genreToRemove) => {
-    setFormData({
-      ...formData,
-      genres: formData.genres.filter(g => g !== genreToRemove)
-    });
+    setFormData({ ...formData, genres: formData.genres.filter(g => g !== genreToRemove) });
   };
 
   const handleSaveMovie = async (e) => {
@@ -103,6 +106,11 @@ const Admin = () => {
         year: parseInt(formData.year),
         duration: parseInt(formData.duration),
         posterUrl: formData.posterUrl,
+        backdropUrl: formData.backdropUrl,
+        tmdbRating: parseFloat(formData.tmdbRating),
+        contentRating: formData.contentRating,
+        director: formData.director,
+        castCrew: formData.castCrew,
         videoPath: uploadedVideoPath, 
         genres: formData.genres 
       });
@@ -110,7 +118,6 @@ const Admin = () => {
       toast.dismiss(loadingToast);
       toast.success("¡Película guardada y subida con éxito!");
       navigate('/catalog');
-
     } catch (error) {
       console.error("Error al guardar la película:", error);
       toast.dismiss(loadingToast);
@@ -122,8 +129,8 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-10">
-      <div className="flex justify-between items-center mb-10 border-b border-slate-800 pb-4 max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-emerald-500 tracking-widest">PANEL DE CONTROL</h1>
+      <div className="flex justify-between items-center mb-10 border-b border-slate-800 pb-4 max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold text-sky-500 tracking-widest">PANEL DE CONTROL</h1>
         <button 
           onClick={() => navigate('/catalog')}
           className="text-slate-400 hover:text-white transition-colors border border-slate-700 px-4 py-2 rounded cursor-pointer"
@@ -132,21 +139,19 @@ const Admin = () => {
         </button>
       </div>
 
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-1 space-y-6">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* BUSCADOR */}
+        <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl">
-            <h2 className="text-lg font-bold text-sky-400 mb-4">1. Importar de TMDB</h2>
+            <h2 className="text-lg font-bold text-sky-400 mb-4">1. Importar Metadatos</h2>
             <form onSubmit={handleSearchTMDB} className="flex flex-col gap-3">
               <input
-                type="text"
-                placeholder="Ej: Matrix"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                type="text" placeholder="Ej: Matrix" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500"
               />
               <button 
-                type="submit"
-                disabled={isSearching}
+                type="submit" disabled={isSearching}
                 className="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-700 text-white font-bold py-2 px-4 rounded transition-colors cursor-pointer"
               >
                 {isSearching ? 'Buscando...' : 'Buscar'}
@@ -159,18 +164,41 @@ const Admin = () => {
             )}
           </div>
 
-          {formData.posterUrl && (
+          {/* LISTA DE RESULTADOS */}
+          {searchResults.length > 0 && (
+            <div className="bg-slate-800 border border-slate-700 p-4 rounded-lg shadow-xl max-h-96 overflow-y-auto custom-scrollbar">
+              <h3 className="text-sm font-bold text-slate-400 mb-3">Resultados de búsqueda:</h3>
+              <div className="flex flex-col gap-3">
+                {searchResults.map((result, index) => (
+                  <div 
+                    key={index} onClick={() => handleSelectMovie(result)}
+                    className="flex items-center gap-3 bg-slate-900 p-2 rounded border border-slate-700 hover:border-sky-500 hover:bg-slate-800 cursor-pointer transition-colors"
+                  >
+                    <img src={result.posterUrl || 'https://via.placeholder.com/50x75?text=NA'} alt="poster" className="w-12 h-16 object-cover rounded" />
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="font-bold text-sm truncate text-sky-300">{result.title}</span>
+                      <span className="text-xs text-slate-400">{result.year} • {result.director || 'Sin director'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {formData.posterUrl && searchResults.length === 0 && (
             <div className="bg-slate-800 border border-slate-700 p-4 rounded-lg shadow-xl flex flex-col items-center">
-              <span className="text-sm text-slate-400 mb-2">Previsualización de Carátula</span>
+              <span className="text-sm text-slate-400 mb-2">Carátula Seleccionada</span>
               <img src={formData.posterUrl} alt="Poster" className="w-full max-w-[200px] rounded shadow-lg" />
             </div>
           )}
         </div>
 
-        <div className="md:col-span-2">
+        {/* FORMULARIO */}
+        <div className="lg:col-span-2">
           <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl">
             <h2 className="text-lg font-bold text-sky-400 mb-6">2. Revisar y Subir</h2>
             <form onSubmit={handleSaveMovie} className="flex flex-col gap-5">
+              
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-3">
                   <label className="block text-sm text-slate-400 mb-1">Título</label>
@@ -182,32 +210,31 @@ const Admin = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Director</label>
+                  <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-400 mb-1">Reparto principal</label>
+                  <input type="text" name="castCrew" value={formData.castCrew} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm text-slate-400 mb-1">Sinopsis</label>
-                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="4" className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
+                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
               </div>
 
               <div>
                 <label className="block text-sm text-slate-400 mb-2">Géneros / Etiquetas</label>
                 <div className="flex gap-2 mb-3">
                   <input 
-                    type="text" 
-                    placeholder="Ej: Thriller" 
-                    value={genreInput}
-                    onChange={(e) => setGenreInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault(); 
-                        handleAddGenre();
-                      }
-                    }}
+                    type="text" placeholder="Ej: Thriller" value={genreInput} onChange={(e) => setGenreInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddGenre(); } }}
                     className="flex-grow p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500"
                   />
-                  <button 
-                    type="button"
-                    onClick={handleAddGenre}
-                    className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded transition-colors cursor-pointer"
-                  >
+                  <button type="button" onClick={handleAddGenre} className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded transition-colors">
                     Añadir
                   </button>
                 </div>
@@ -219,36 +246,42 @@ const Admin = () => {
                       <button 
                         type="button" 
                         onClick={() => handleRemoveGenre(genre)}
-                        className="text-sky-300/50 group-hover:text-red-400 hover:text-red-500 focus:outline-none transition-colors"
+                        className="text-sky-300/50 group-hover:text-red-400 hover:text-red-500 focus:outline-none transition-colors cursor-pointer"
                         title="Eliminar género"
                       >
                         ✕
                       </button>
                     </span>
                   ))}
-                  {formData.genres.length === 0 && (
-                    <span className="text-slate-500 text-sm italic">Ningún género asignado...</span>
-                  )}
+                  {formData.genres.length === 0 && <span className="text-slate-500 text-sm italic">Ningún género asignado...</span>}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-2">
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Duración (Minutos)</label>
-                  <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
+              <div className="grid grid-cols-4 gap-4 mt-2 border-t border-slate-700 pt-4">
+                <div className="col-span-1">
+                  <label className="block text-xs text-slate-500 mb-1">Nota API</label>
+                  <input type="text" value={formData.tmdbRating ? parseFloat(formData.tmdbRating).toFixed(1) : ''} readOnly className="w-full p-2 bg-slate-900/50 border border-slate-800 rounded text-slate-400 text-sm" />
                 </div>
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Archivo de Vídeo (.mp4)</label>
-                  <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-slate-300 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-sky-500 file:text-white hover:file:bg-sky-600" required />
+                <div className="col-span-1">
+                  <label className="block text-xs text-slate-500 mb-1">Edad</label>
+                  <input type="text" value={formData.contentRating} readOnly className="w-full p-2 bg-slate-900/50 border border-slate-800 rounded text-slate-400 text-sm" />
                 </div>
+                <div className="col-span-1">
+                  <label className="block text-sm text-slate-400 mb-1">Dur. (Min)</label>
+                  <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="w-full p-2 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-sky-400 mt-2 mb-2">Archivo de vídeo (.mp4)</label>
+                <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full p-2 bg-slate-900 border border-sky-500/50 rounded text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-sky-500 file:text-white hover:file:bg-sky-600" required />
               </div>
 
               <button 
-                type="submit" 
-                disabled={isSaving}
-                className="mt-6 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-700 text-white font-bold py-4 rounded transition-colors text-lg cursor-pointer"
+                type="submit" disabled={isSaving}
+                className="mt-6 bg-sky-500 hover:bg-sky-600 disabled:bg-slate-700 text-white font-bold py-4 rounded shadow-lg text-lg cursor-pointer transition-all"
               >
-                {isSaving ? 'Subiendo vídeo al servidor...' : 'Guardar Película'}
+                {isSaving ? 'Procesando y Subiendo al Servidor...' : 'Publicar Película'}
               </button>
             </form>
           </div>

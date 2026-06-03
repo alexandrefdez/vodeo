@@ -43,6 +43,12 @@ public class CatalogService {
         movie.setPosterUrl(request.getPosterUrl());
         movie.setVideoPath(request.getVideoPath());
 
+        movie.setBackdropUrl(request.getBackdropUrl());
+        movie.setTmdbRating(request.getTmdbRating());
+        movie.setContentRating(request.getContentRating());
+        movie.setDirector(request.getDirector());
+        movie.setCastCrew(request.getCastCrew());
+
         List<Genre> genres = new ArrayList<>();
         if (request.getGenres() != null) {
             for (String genreName : request.getGenres()) {
@@ -130,13 +136,20 @@ public class CatalogService {
         response.setDuration(movie.getDuration());
         response.setVideoPath(movie.getVideoPath());
         response.setPosterUrl(movie.getPosterUrl());
+
+        response.setBackdropUrl(movie.getBackdropUrl());
+        response.setTmdbRating(movie.getTmdbRating());
+        response.setContentRating(movie.getContentRating());
+        response.setDirector(movie.getDirector());
+        response.setCastCrew(movie.getCastCrew());
+
         response.setGenres(movie.getGenres().stream()
                 .map(Genre::getName)
                 .toList());
         return response;
     }
 
-    public ExternalMovieDto fetchMovieData(String title) {
+    public List<ExternalMovieDto> fetchMovieData(String title) {
         return movieMetadataService.fetchMovieData(title);
     }
 }

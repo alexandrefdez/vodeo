@@ -8,6 +8,7 @@ import Player from './pages/Player';
 import Admin from './pages/Admin';
 import Watchlist from './pages/Watchlist';
 import Profile from './pages/Profile';
+import MovieDetails from './pages/MovieDetails';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -51,6 +52,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Player />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/details/movie/:id" 
+            element={
+              <PrivateRoute>
+                <MovieDetails />
               </PrivateRoute>
             } 
           />

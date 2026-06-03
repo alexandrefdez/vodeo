@@ -112,7 +112,7 @@ const Watchlist = () => {
             {movies.map((movie) => (
               <div 
                 key={movie.id}
-                onClick={() => navigate(`/player/${movie.id}`)}
+                onClick={() => navigate(`/details/movie/${movie.id}`)}
                 className="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:shadow-pink-500/20 hover:scale-105 transition-all duration-300 cursor-pointer border border-slate-700 flex flex-col relative group"
               >
                 <button

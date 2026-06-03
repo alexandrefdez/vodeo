@@ -11,4 +11,11 @@ public class ExternalMovieDto {
     private String posterUrl;
     private Integer duration;
     private List<String> genres;
+
+    // Nuevos campos
+    private String backdropUrl;
+    private Double tmdbRating;
+    private String contentRating;
+    private String director;
+    private String castCrew;
 }
