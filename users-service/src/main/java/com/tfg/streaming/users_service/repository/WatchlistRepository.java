@@ -13,5 +13,5 @@ import java.util.Optional;
 public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
     Page<Watchlist> findByUserOrderByIdDesc(User user, Pageable pageable);
 
-    Optional<Watchlist> findByUserAndMovieId(User user, Long movieId);
+    Optional<Watchlist> findByUserAndMediaIdAndMediaType(User user, Long mediaId, String mediaType);
 }

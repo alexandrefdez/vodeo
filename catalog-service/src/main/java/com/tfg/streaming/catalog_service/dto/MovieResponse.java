@@ -13,4 +13,11 @@ public class MovieResponse {
     private String videoPath;
     private String posterUrl;
     private List<String> genres;
+
+    // Nuevos campos para pagina de detalles
+    private String backdropUrl;
+    private Double tmdbRating;
+    private String contentRating;
+    private String director;
+    private String castCrew;
 }

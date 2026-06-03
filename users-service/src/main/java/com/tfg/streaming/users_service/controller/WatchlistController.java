@@ -1,5 +1,6 @@
 package com.tfg.streaming.users_service.controller;
 
+import com.tfg.streaming.users_service.dto.WatchlistItemDto;
 import com.tfg.streaming.users_service.service.WatchlistService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,15 +15,15 @@ public class WatchlistController {
 
     private final WatchlistService watchlistService;
 
-    @PostMapping("/{movieId}")
-    public ResponseEntity<Void> toggleWatchlist(@PathVariable Long movieId) {
+    @PostMapping("/{mediaType}/{mediaId}")
+    public ResponseEntity<Void> toggleWatchlist(@PathVariable String mediaType, @PathVariable Long mediaId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        watchlistService.toggleWatchlist(email, movieId);
+        watchlistService.toggleWatchlist(email, mediaId, mediaType);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public ResponseEntity<Page<Long>> getWatchlist(
+    public ResponseEntity<Page<WatchlistItemDto>> getWatchlist(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();

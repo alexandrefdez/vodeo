@@ -18,4 +18,7 @@ public class Genre {
 
     @ManyToMany(mappedBy = "genres")
     private List<Movie> movies;
+
+    @ManyToMany(mappedBy = "genres")
+    private List<Series> series;
 }

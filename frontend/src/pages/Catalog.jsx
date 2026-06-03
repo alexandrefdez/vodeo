@@ -8,7 +8,9 @@ const Catalog = () => {
   const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
   
-  const [movies, setMovies] = useState([]);
+  const [contentType, setContentType] = useState('movie'); // 'movie' o 'series'
+
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -20,7 +22,7 @@ const Catalog = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
   
-  const [watchlistIds, setWatchlistIds] = useState([]);
+  const [watchlistKeys, setWatchlistKeys] = useState([]); // Ahora guarda strings: "movie-1", "series-5"
 
   useEffect(() => {
     const fetchGenres = async () => {
@@ -35,34 +37,39 @@ const Catalog = () => {
   }, []);
 
   useEffect(() => {
-    const fetchWatchlistIds = async () => {
+    const fetchWatchlistKeys = async () => {
       try {
-        // Obtenemos todos los IDs
         const response = await authApi.get('/watchlist?page=0&size=10000');
-        
         if (response.data && response.data.content) {
-          setWatchlistIds(response.data.content);
+          // Mapeamos a claves compuestas para que no colisionen IDs de pelis con series
+          setWatchlistKeys(response.data.content.map(w => `${w.mediaType}-${w.mediaId}`));
         } else {
-          setWatchlistIds([]);
+          setWatchlistKeys([]);
         }
       } catch (err) {
-        console.error("Error al cargar favoritos", err);
-        setWatchlistIds([]);
+        setWatchlistKeys([]);
       }
     };
-    if (user) fetchWatchlistIds();
+    if (user) fetchWatchlistKeys();
   }, [user]);
 
   useEffect(() => {
-    const fetchMovies = async () => {
+    setCurrentPage(0);
+    setSearchQuery('');
+    setSelectedGenre('');
+  }, [contentType]);
+
+  useEffect(() => {
+    const fetchItems = async () => {
       try {
         setLoading(true);
-        let url = `/movies?page=${currentPage}&size=12`;
+        const baseEndpoint = contentType === 'movie' ? '/movies' : '/series';
+        let url = `${baseEndpoint}?page=${currentPage}&size=12`;
 
         if (searchQuery) {
-          url = `/movies/search?title=${searchQuery}&page=${currentPage}&size=12`;
+          url = `${baseEndpoint}/search?title=${searchQuery}&page=${currentPage}&size=12`;
         } else if (selectedGenre) {
-          url = `/movies/genre?genre=${selectedGenre}&page=${currentPage}&size=12`;
+          url = `${baseEndpoint}/genre?genre=${selectedGenre}&page=${currentPage}&size=12`;
         }
 
         const response = await catalogApi.get(url);
@@ -70,7 +77,7 @@ const Catalog = () => {
         if (response.data.content.length === 0 && currentPage > 0) {
           setCurrentPage(prev => prev - 1);
         } else {
-          setMovies(response.data.content);
+          setItems(response.data.content);
           setTotalPages(response.data.totalPages);
         }
         setError(null);
@@ -82,8 +89,8 @@ const Catalog = () => {
       }
     };
 
-    fetchMovies();
-  }, [currentPage, refreshKey, searchQuery, selectedGenre]);
+    fetchItems();
+  }, [currentPage, refreshKey, searchQuery, selectedGenre, contentType]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -103,37 +110,24 @@ const Catalog = () => {
     setCurrentPage(0);
   };
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
-
-  const handleToggleWatchlist = async (e, movieId) => {
+  const handleToggleWatchlist = async (e, itemId) => {
     e.stopPropagation();
-    
-    // El ? asegura que si watchlistIds es undefined, no explote el programa
-    const isCurrentlySaved = watchlistIds?.includes(movieId);
-    const previousIds = [...(watchlistIds || [])];
+    const itemKey = `${contentType}-${itemId}`;
+    const isCurrentlySaved = watchlistKeys?.includes(itemKey);
+    const previousKeys = [...(watchlistKeys || [])];
     
     if (isCurrentlySaved) {
-      setWatchlistIds(watchlistIds.filter(id => id !== movieId));
+      setWatchlistKeys(watchlistKeys.filter(k => k !== itemKey));
       toast.success("Eliminada de Mi Lista", { icon: '💔' });
     } else {
-      setWatchlistIds([...previousIds, movieId]);
+      setWatchlistKeys([...previousKeys, itemKey]);
       toast.success("Añadida a Mi Lista", { icon: '❤️' });
     }
 
     try {
-      await authApi.post(`/watchlist/${movieId}`);
+      await authApi.post(`/watchlist/${contentType}/${itemId}`);
     } catch (err) {
-      setWatchlistIds(previousIds);
+      setWatchlistKeys(previousKeys);
       toast.error("Error de sincronización con el servidor");
     }
   };
@@ -143,7 +137,9 @@ const Catalog = () => {
       
       {/* HEADER */}
       <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
-        <h1 className="text-3xl font-bold text-sky-500 tracking-widest">VODEO</h1>
+        <h1 className="text-3xl font-bold text-white tracking-widest flex gap-2 items-center">
+          VODEO
+        </h1>
         
         <div className="flex items-center gap-4">
           {user?.role === 'ADMIN' && (
@@ -154,21 +150,18 @@ const Catalog = () => {
               Panel Admin
             </button>
           )}
-          
           <button 
             onClick={() => navigate('/watchlist')}
             className="flex items-center gap-2 bg-pink-500/10 text-pink-400 border border-pink-500 hover:bg-pink-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold"
           >
             <span>❤️</span> Mi Lista
           </button>
-          
           <button 
             onClick={() => navigate('/profile')}
             className="flex items-center gap-2 bg-slate-700/50 text-slate-300 border border-slate-600 hover:bg-slate-600 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold"
           >
             <span>👤</span> Perfil
           </button>
-
           <button 
             onClick={logout}
             className="bg-red-500/10 text-red-500 border border-red-500 hover:bg-red-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold"
@@ -178,20 +171,37 @@ const Catalog = () => {
         </div>
       </div>
 
+      {/* MENÚ DE NAVEGACIÓN PRINCIPAL */}
+      <div className="flex justify-center mb-10">
+        <div className="bg-slate-800 p-1 rounded-full border border-slate-700 inline-flex shadow-xl">
+          <button 
+            onClick={() => setContentType('movie')}
+            className={`px-8 py-3 rounded-full font-bold text-lg transition-all cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+          >
+            Películas
+          </button>
+          <button 
+            onClick={() => setContentType('series')}
+            className={`px-8 py-3 rounded-full font-bold text-lg transition-all cursor-pointer ${contentType === 'series' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+          >
+            Series de TV
+          </button>
+        </div>
+      </div>
+
       {/* FILTROS Y BÚSQUEDA */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-10 bg-slate-800/50 p-6 rounded-lg border border-slate-800">
-        
         <form onSubmit={handleSearchSubmit} className="w-full md:w-1/3 flex">
           <input 
             type="text" 
-            placeholder="Buscar película por título..." 
+            placeholder={`Buscar ${contentType === 'movie' ? 'película' : 'serie'}...`} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-3 bg-slate-900 border border-slate-700 rounded-l focus:outline-none focus:border-sky-500"
+            className={`w-full p-3 bg-slate-900 border border-slate-700 rounded-l focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`}
           />
           <button 
             type="submit"
-            className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 rounded-r transition-colors cursor-pointer"
+            className={`text-white font-bold px-6 rounded-r transition-colors cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
           >
             Buscar
           </button>
@@ -202,7 +212,7 @@ const Catalog = () => {
             <span className="text-slate-400 font-semibold mr-2">Categorías:</span>
             <button
               onClick={handleClearFilters}
-              className={`px-4 py-2 rounded-full font-semibold transition-colors border cursor-pointer ${!selectedGenre && !searchQuery ? 'bg-sky-500 text-white border-sky-500' : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-sky-500/50'}`}
+              className={`px-4 py-2 rounded-full font-semibold transition-colors border cursor-pointer ${!selectedGenre && !searchQuery ? (contentType === 'movie' ? 'bg-sky-500 text-white border-sky-500' : 'bg-emerald-500 text-white border-emerald-500') : 'bg-slate-900 text-slate-300 border-slate-700'}`}
             >
               Todos
             </button>
@@ -210,7 +220,7 @@ const Catalog = () => {
               <button
                 key={genre}
                 onClick={() => handleGenreClick(genre)}
-                className={`px-4 py-2 rounded-full font-semibold transition-colors border cursor-pointer ${selectedGenre === genre ? 'bg-sky-500 text-white border-sky-500' : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-sky-500/50'}`}
+                className={`px-4 py-2 rounded-full font-semibold transition-colors border cursor-pointer ${selectedGenre === genre ? (contentType === 'movie' ? 'bg-sky-500 text-white border-sky-500' : 'bg-emerald-500 text-white border-emerald-500') : 'bg-slate-900 text-slate-300 border-slate-700'}`}
               >
                 {genre}
               </button>
@@ -220,9 +230,9 @@ const Catalog = () => {
       </div>
       
       {/* ESTADOS DE CARGA Y ERROR */}
-      {loading && movies.length === 0 && (
+      {loading && items.length === 0 && (
         <div className="text-center text-slate-400 mt-20">
-          <p className="text-xl animate-pulse">Cargando películas...</p>
+          <p className="text-xl animate-pulse">Cargando catálogo...</p>
         </div>
       )}
 
@@ -233,35 +243,36 @@ const Catalog = () => {
       )}
 
       {/* ESTADO VACÍO (NO HAY RESULTADOS) */}
-      {!loading && !error && movies.length === 0 && (
+      {!loading && !error && items.length === 0 && (
         <div className="text-center text-slate-400 mt-20 bg-slate-800/30 p-10 rounded-lg border border-slate-800">
           <p className="text-2xl font-bold mb-2">No hay resultados</p>
           <p className="text-slate-500">Prueba a buscar otro título o cambiar de categoría.</p>
           <button 
             onClick={handleClearFilters}
-            className="mt-6 bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-2 rounded transition-colors cursor-pointer"
+            className={`mt-6 text-white font-bold px-6 py-2 rounded transition-colors cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
           >
             Ver todo el catálogo
           </button>
         </div>
       )}
 
-      {/* GRID DE PELÍCULAS */}
-      {!error && movies.length > 0 && (
+      {/* GRID DE PELÍCULAS/SERIES */}
+      {!error && items.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 gap-6">
-            {movies.map((movie) => {
-              const isFavorite = watchlistIds?.includes(movie.id);
+            {items.map((item) => {
+              const itemKey = `${contentType}-${item.id}`;
+              const isFavorite = watchlistKeys?.includes(itemKey);
               return (
                 <div 
-                  key={movie.id} 
-                  onClick={() => navigate(`/player/${movie.id}`)} 
-                  className="bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:shadow-sky-500/20 hover:scale-105 transition-all duration-300 cursor-pointer border border-slate-700 flex flex-col relative group"
+                  key={item.id} 
+                  onClick={() => navigate(`/details/${contentType}/${item.id}`)}
+                  className={`bg-slate-800 rounded-lg overflow-hidden shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer border border-slate-700 flex flex-col relative group ${contentType === 'movie' ? 'hover:shadow-sky-500/20' : 'hover:shadow-emerald-500/20'}`}
                 >
                   
-                  {/* BOTÓN CORAZÓN (OPTIMISTIC UI) */}
+                  {/* BOTÓN CORAZÓN (AHORA DISPONIBLE PARA SERIES TAMBIÉN) */}
                   <button
-                    onClick={(e) => handleToggleWatchlist(e, movie.id)}
+                    onClick={(e) => handleToggleWatchlist(e, item.id)}
                     className="absolute top-3 right-3 z-10 p-2 rounded-full bg-slate-900/80 backdrop-blur-sm transition-all border border-slate-700 hover:scale-110 cursor-pointer"
                     title={isFavorite ? "Quitar de Mi Lista" : "Añadir a Mi Lista"}
                   >
@@ -272,65 +283,56 @@ const Catalog = () => {
                     )}
                   </button>
 
-                  {/* IMAGEN DE LA PELÍCULA */}
                   <div className="h-64 bg-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-                    {movie.posterUrl ? (
-                      <img 
-                        src={movie.posterUrl} 
-                        alt={movie.title} 
-                        className="w-full h-full object-cover" 
-                      />
+                    {item.posterUrl ? (
+                      <img src={item.posterUrl} alt={item.title} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-slate-500 font-bold">Sin Imagen</span>
                     )}
                   </div>
                   
-                  {/* INFORMACIÓN DE LA PELÍCULA */}
                   <div className="p-4 flex flex-col flex-grow">
-                    <h2 className="text-lg font-bold text-sky-400 mb-1 truncate" title={movie.title}>
-                      {movie.title}
+                    <h2 className={`text-lg font-bold mb-1 truncate ${contentType === 'movie' ? 'text-sky-400' : 'text-emerald-400'}`} title={item.title}>
+                      {item.title}
                     </h2>
                     
                     <div className="flex justify-between text-xs text-slate-400 mb-3">
-                      <span>{movie.year}</span>
-                      <span>{movie.duration} min</span>
+                      <span>{item.year || item.startYear}</span>
+                      {item.duration && <span>{item.duration} min</span>}
                     </div>
                     
                     <div className="mt-auto flex flex-col gap-3">
-                      
-                      {/* ETIQUETAS DE GÉNEROS */}
                       <div className="flex flex-wrap gap-2">
-                        {movie.genres && movie.genres.map((genre, index) => (
+                        {item.genres && item.genres.map((genre, index) => (
                           <span 
                             key={index} 
-                            className="bg-slate-700 text-sky-300 text-xs px-2 py-1 rounded-full"
+                            className={`bg-slate-700 text-xs px-2 py-1 rounded-full ${contentType === 'movie' ? 'text-sky-300' : 'text-emerald-300'}`}
                           >
                             {genre}
                           </span>
                         ))}
                       </div>
 
-                      {/* BOTÓN DE BORRAR (SOLO ADMIN) */}
                       {user?.role === 'ADMIN' && (
                         <button 
                           onClick={async (e) => {
                             e.stopPropagation();
-                            if (window.confirm(`¿Estás seguro de que quieres borrar "${movie.title}" de forma permanente?`)) {
-                              const loadingToast = toast.loading("Eliminando película...");
+                            if (window.confirm(`¿Seguro que quieres borrar "${item.title}"?`)) {
+                              const loadingToast = toast.loading(`Eliminando...`);
                               try {
-                                await catalogApi.delete(`/movies/${movie.id}`);
+                                await catalogApi.delete(`/${contentType === 'movie' ? 'movies' : 'series'}/${item.id}`);
                                 setRefreshKey(old => old + 1);
                                 toast.dismiss(loadingToast);
-                                toast.success("Película eliminada correctamente");
+                                toast.success("Eliminada correctamente");
                               } catch (err) {
                                 toast.dismiss(loadingToast);
-                                toast.error("Error al eliminar la película del sistema");
+                                toast.error("Error al eliminar del sistema");
                               }
                             }
                           }} 
                           className="w-full bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 py-2 rounded font-bold transition-colors text-sm cursor-pointer"
                         >
-                          Eliminar Película
+                          Eliminar
                         </button>
                       )}
                     </div>
@@ -340,25 +342,22 @@ const Catalog = () => {
             })}
           </div>
 
-          {/* CONTROLES DE PAGINACIÓN */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-6 mt-12">
               <button 
-                onClick={handlePrevPage} 
+                onClick={() => setCurrentPage(prev => prev - 1)} 
                 disabled={currentPage === 0}
-                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors border border-slate-700 cursor-pointer"
+                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors border border-slate-700 cursor-pointer"
               >
                 &larr; Anterior
               </button>
-              
               <span className="text-slate-400 font-semibold">
                 Página {currentPage + 1} de {totalPages}
               </span>
-              
               <button 
-                onClick={handleNextPage} 
+                onClick={() => setCurrentPage(prev => prev + 1)} 
                 disabled={currentPage >= totalPages - 1} 
-                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-sky-600 transition-colors border border-slate-700 cursor-pointer"
+                className="px-6 py-2 bg-slate-800 text-white font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 transition-colors border border-slate-700 cursor-pointer"
               >
                 Siguiente &rarr;
               </button>

@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 @Table(name = "watchlist", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "movie_id" })
+        @UniqueConstraint(columnNames = { "user_id", "media_id", "media_type" })
 })
 @Data
 public class Watchlist {
@@ -18,6 +18,9 @@ public class Watchlist {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "movie_id", nullable = false)
-    private Long movieId;
+    @Column(name = "media_id", nullable = false)
+    private Long mediaId;
+
+    @Column(name = "media_type", nullable = false)
+    private String mediaType; // Guarda "movie" o "series"
 }
