@@ -1,25 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { catalogApi, streamingApi } from '../api/axiosConfig';
+import { AuthContext } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const Admin = () => {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   const [contentType, setContentType] = useState('movie'); // 'movie' o 'series'
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchMessage, setSearchMessage] = useState(null);
+  const [searchResults, setSearchResults] = useState([]);
+  
   const [isSaving, setIsSaving] = useState(false);
   const [genreInput, setGenreInput] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '', year: '', description: '', duration: '',
     posterUrl: '', backdropUrl: '', tmdbRating: '', contentRating: '',
     director: '', castCrew: '', videoFile: null, genres: [] 
   });
+
+  useEffect(() => {
+    if (!user || user.role !== 'ADMIN') navigate('/catalog');
+  }, [user, navigate]);
+
+  // Limpiar formulario al cambiar entre Películas y Series
+  useEffect(() => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setSearchMessage(null);
+    setFormData({
+      title: '', year: '', description: '', duration: '',
+      posterUrl: '', backdropUrl: '', tmdbRating: '', contentRating: '',
+      director: '', castCrew: '', videoFile: null, genres: []
+    });
+  }, [contentType]);
 
   const handleSearchTMDB = async (e) => {
     e.preventDefault();
@@ -112,7 +131,7 @@ const Admin = () => {
         description: formData.description,
         posterUrl: formData.posterUrl,
         backdropUrl: formData.backdropUrl,
-        tmdbRating: parseFloat(formData.tmdbRating),
+        tmdbRating: parseFloat(formData.tmdbRating) || 0,
         contentRating: formData.contentRating,
         director: formData.director,
         castCrew: formData.castCrew,
@@ -142,36 +161,52 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-10">
-      <div className="flex justify-between items-center mb-10 border-b border-slate-800 pb-4 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-slate-900 text-white p-10 font-sans">
+      
+      {/* HEADER PRINCIPAL */}
+      <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-4 max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-sky-500 tracking-widest">PANEL DE CONTROL</h1>
         
-        <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-          <button
-            onClick={() => { setContentType('movie'); setSearchResults([]); }}
-            className={`px-6 py-2 rounded-md font-bold transition-all cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+        <div className="flex gap-4 items-center">
+          
+          {/* BOTÓN NUEVO PARA IR A LA SUB-PANTALLA DE DASHBOARD */}
+          <button 
+            onClick={() => navigate('/admin/dashboard')}
+            className="bg-indigo-500/10 text-indigo-400 border border-indigo-500 hover:bg-indigo-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold flex items-center gap-2"
           >
-            Películas
+            📊 Ver Estadísticas
           </button>
-          <button
-            onClick={() => { setContentType('series'); setSearchResults([]); }}
-            className={`px-6 py-2 rounded-md font-bold transition-all cursor-pointer ${contentType === 'series' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+
+          <button 
+            onClick={() => navigate('/catalog')}
+            className="text-slate-400 hover:text-white transition-colors border border-slate-700 px-4 py-2 rounded cursor-pointer font-bold bg-slate-800"
           >
-            Series
+            &larr; Volver al Catálogo
           </button>
         </div>
+      </div>
 
-        <button 
-          onClick={() => navigate('/catalog')}
-          className="text-slate-400 hover:text-white transition-colors border border-slate-700 px-4 py-2 rounded cursor-pointer"
-        >
-          &larr; Volver al Catálogo
-        </button>
+      {/* SELECTOR DE TIPO DE CONTENIDO */}
+      <div className="max-w-6xl mx-auto flex justify-center mb-8">
+        <div className="bg-slate-800 p-1 rounded-lg border border-slate-700 flex shadow-lg">
+          <button
+            onClick={() => setContentType('movie')}
+            className={`px-8 py-2 rounded-md font-bold transition-all cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+          >
+            🎬 Películas
+          </button>
+          <button
+            onClick={() => setContentType('series')}
+            className={`px-8 py-2 rounded-md font-bold transition-all cursor-pointer ${contentType === 'series' ? 'bg-emerald-500 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}
+          >
+            📺 Series de TV
+          </button>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* BUSCADOR */}
+        {/* COLUMNA IZQUIERDA: BUSCADOR Y PÓSTER */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl">
             <h2 className={`text-lg font-bold mb-4 ${contentType === 'movie' ? 'text-sky-400' : 'text-emerald-400'}`}>
@@ -196,20 +231,19 @@ const Admin = () => {
             )}
           </div>
 
-          {/* LISTA DE RESULTADOS */}
           {searchResults.length > 0 && (
             <div className="bg-slate-800 border border-slate-700 p-4 rounded-lg shadow-xl max-h-96 overflow-y-auto custom-scrollbar">
-              <h3 className="text-sm font-bold text-slate-400 mb-3">Resultados de búsqueda:</h3>
+              <h3 className="text-sm font-bold text-slate-400 mb-3">Elige la correcta:</h3>
               <div className="flex flex-col gap-3">
                 {searchResults.map((result, index) => (
                   <div 
                     key={index} onClick={() => handleSelectMovie(result)}
                     className={`flex items-center gap-3 bg-slate-900 p-2 rounded border border-slate-700 hover:bg-slate-800 cursor-pointer transition-colors ${contentType === 'movie' ? 'hover:border-sky-500' : 'hover:border-emerald-500'}`}
                   >
-                    <img src={result.posterUrl || 'https://via.placeholder.com/50x75?text=NA'} alt="poster" className="w-12 h-16 object-cover rounded" />
-                    <div className="flex flex-col overflow-hidden">
+                    <img src={result.posterUrl || 'https://via.placeholder.com/50x75?text=NA'} alt="poster" className="w-12 h-16 object-cover rounded shrink-0" />
+                    <div className="flex flex-col overflow-hidden w-full">
                       <span className={`font-bold text-sm truncate ${contentType === 'movie' ? 'text-sky-300' : 'text-emerald-300'}`}>{result.title}</span>
-                      <span className="text-xs text-slate-400">{result.year || result.startYear} • {result.director || 'Sin creador'}</span>
+                      <span className="text-xs text-slate-400 mt-1">{result.year || result.startYear} • {result.director || 'Sin creador'}</span>
                     </div>
                   </div>
                 ))}
@@ -219,13 +253,13 @@ const Admin = () => {
 
           {formData.posterUrl && searchResults.length === 0 && (
             <div className="bg-slate-800 border border-slate-700 p-4 rounded-lg shadow-xl flex flex-col items-center">
-              <span className="text-sm text-slate-400 mb-2">Carátula Seleccionada</span>
-              <img src={formData.posterUrl} alt="Poster" className="w-full max-w-[200px] rounded shadow-lg" />
+              <span className="text-sm text-slate-400 mb-2 font-bold uppercase">Carátula Seleccionada</span>
+              <img src={formData.posterUrl} alt="Poster" className="w-full max-w-[200px] rounded shadow-lg border border-slate-700" />
             </div>
           )}
         </div>
 
-        {/* FORMULARIO */}
+        {/* COLUMNA DERECHA: FORMULARIO */}
         <div className="lg:col-span-2">
           <div className="bg-slate-800 border border-slate-700 p-6 rounded-lg shadow-xl">
             <h2 className={`text-lg font-bold mb-6 ${contentType === 'movie' ? 'text-sky-400' : 'text-emerald-400'}`}>
@@ -235,40 +269,51 @@ const Admin = () => {
               
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-3">
-                  <label className="block text-sm text-slate-400 mb-1">Título</label>
+                  <label className="block text-sm text-slate-400 mb-1 font-bold">Título</label>
                   <input type="text" name="title" value={formData.title} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} required />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-sm text-slate-400 mb-1">{contentType === 'movie' ? 'Año' : 'Año Inicio'}</label>
+                  <label className="block text-sm text-slate-400 mb-1 font-bold">{contentType === 'movie' ? 'Año' : 'Año Inicio'}</label>
                   <input type="number" name="year" value={formData.year} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">{contentType === 'movie' ? 'Director' : 'Creador'}</label>
+                  <label className="block text-sm text-slate-400 mb-1 font-bold">{contentType === 'movie' ? 'Director' : 'Creador'}</label>
                   <input type="text" name="director" value={formData.director} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} />
                 </div>
                 <div>
-                  <label className="block text-sm text-slate-400 mb-1">Reparto principal</label>
+                  <label className="block text-sm text-slate-400 mb-1 font-bold">Reparto principal</label>
                   <input type="text" name="castCrew" value={formData.castCrew} onChange={handleInputChange} className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1">Sinopsis</label>
-                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} required />
+                <label className="block text-sm text-slate-400 mb-1 font-bold">Sinopsis</label>
+                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'} resize-none`} required />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-900/50 rounded border border-slate-700/50">
+                <div className="flex flex-col">
+                  <label className="text-xs text-slate-400 mb-1 font-bold uppercase">URL del Póster (Vertical)</label>
+                  <input type="url" name="posterUrl" value={formData.posterUrl} onChange={handleInputChange} placeholder="https://ejemplo.com/poster.jpg" className={`p-2 bg-slate-900 border border-slate-700 rounded text-slate-300 text-sm focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs text-slate-400 mb-1 font-bold uppercase">URL del Fondo (Horizontal)</label>
+                  <input type="url" name="backdropUrl" value={formData.backdropUrl} onChange={handleInputChange} placeholder="https://ejemplo.com/fondo.jpg" className={`p-2 bg-slate-900 border border-slate-700 rounded text-slate-300 text-sm focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`} />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-2">Géneros / Etiquetas</label>
+                <label className="block text-sm text-slate-400 mb-2 font-bold">Géneros / Etiquetas</label>
                 <div className="flex gap-2 mb-3">
                   <input 
                     type="text" placeholder="Ej: Thriller" value={genreInput} onChange={(e) => setGenreInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddGenre(); } }}
                     className={`flex-grow p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'}`}
                   />
-                  <button type="button" onClick={handleAddGenre} className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded transition-colors">
+                  <button type="button" onClick={handleAddGenre} className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-6 rounded transition-colors cursor-pointer border border-slate-600">
                     Añadir
                   </button>
                 </div>
@@ -293,17 +338,17 @@ const Admin = () => {
 
               <div className="grid grid-cols-4 gap-4 mt-2 border-t border-slate-700 pt-4">
                 <div className="col-span-1">
-                  <label className="block text-xs text-slate-500 mb-1">Nota API</label>
-                  <input type="text" value={formData.tmdbRating ? parseFloat(formData.tmdbRating).toFixed(1) : ''} readOnly className="w-full p-2 bg-slate-900/50 border border-slate-800 rounded text-slate-400 text-sm" />
+                  <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Nota API</label>
+                  <input type="text" value={formData.tmdbRating ? parseFloat(formData.tmdbRating).toFixed(1) : ''} readOnly className="w-full p-2 bg-slate-900/50 border border-slate-800 rounded text-slate-400 text-sm cursor-not-allowed" />
                 </div>
                 <div className="col-span-1">
-                  <label className="block text-xs text-slate-500 mb-1">Edad</label>
-                  <input type="text" value={formData.contentRating} readOnly className="w-full p-2 bg-slate-900/50 border border-slate-800 rounded text-slate-400 text-sm" />
+                  <label className="block text-xs text-slate-500 mb-1 font-bold uppercase">Edad</label>
+                  <input type="text" value={formData.contentRating} readOnly className="w-full p-2 bg-slate-900/50 border border-slate-800 rounded text-slate-400 text-sm cursor-not-allowed" />
                 </div>
                 
                 {contentType === 'movie' && (
                   <div className="col-span-1">
-                    <label className="block text-sm text-slate-400 mb-1">Dur. (Min)</label>
+                    <label className="block text-xs text-slate-400 mb-1 font-bold uppercase">Dur. (Min)</label>
                     <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="w-full p-2 bg-slate-900 border border-slate-700 rounded focus:outline-none focus:border-sky-500" required />
                   </div>
                 )}
@@ -311,14 +356,20 @@ const Admin = () => {
 
               {contentType === 'movie' && (
                 <div>
-                  <label className="block text-sm font-bold text-sky-400 mt-2 mb-2">Archivo de vídeo (.mp4)</label>
-                  <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full p-2 bg-slate-900 border border-sky-500/50 rounded text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-sky-500 file:text-white hover:file:bg-sky-600" required />
+                  <label className="block text-sm font-bold text-sky-400 mt-2 mb-2 uppercase tracking-wider">3. Archivo de vídeo (.mp4)</label>
+                  <input type="file" accept="video/mp4" onChange={handleFileChange} className="w-full p-2 bg-slate-900 border border-sky-500/50 rounded text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-bold file:bg-sky-500 file:text-white hover:file:bg-sky-600 cursor-pointer" required />
+                </div>
+              )}
+              
+              {contentType === 'series' && (
+                <div className="bg-emerald-500/10 border border-emerald-500/50 p-4 rounded text-sm text-emerald-200 mt-2">
+                  <p><strong>Nota:</strong> Los archivos de vídeo de las series se suben episodio a episodio desde la pantalla de detalles de la serie una vez publicada.</p>
                 </div>
               )}
 
               <button 
                 type="submit" disabled={isSaving}
-                className={`mt-6 text-white font-bold py-4 rounded shadow-lg text-lg cursor-pointer transition-all disabled:bg-slate-700 ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
+                className={`mt-6 text-white font-bold py-4 rounded shadow-lg text-lg cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'}`}
               >
                 {isSaving ? 'Procesando...' : `Publicar ${contentType === 'movie' ? 'Película' : 'Serie'}`}
               </button>

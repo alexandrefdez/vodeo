@@ -10,6 +10,7 @@ import Watchlist from './pages/Watchlist';
 import Profile from './pages/Profile';
 import MovieDetails from './pages/MovieDetails';
 import SeriesDetails from './pages/SeriesDetails';
+import AdminDashboard from './pages/AdminDashboard';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 
@@ -103,6 +104,14 @@ function App() {
             element={
               <AdminRoute>
                 <Admin />
+              </AdminRoute>
+            } 
+          />
+          <Route 
+            path="/admin/dashboard" 
+            element={
+              <AdminRoute>
+                <AdminDashboard />
               </AdminRoute>
             } 
           />
