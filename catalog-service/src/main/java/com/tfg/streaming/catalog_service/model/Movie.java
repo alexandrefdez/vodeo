@@ -27,6 +27,19 @@ public class Movie {
 
     @Column(length = 500)
     private String posterUrl;
+    // Nuevos campos para pagina de detalles
+    @Column(length = 500)
+    private String backdropUrl;
+
+    private Double tmdbRating;
+
+    @Column(length = 50)
+    private String contentRating;
+
+    private String director;
+
+    @Column(length = 1000)
+    private String castCrew;
 
     @ManyToMany
     @JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
