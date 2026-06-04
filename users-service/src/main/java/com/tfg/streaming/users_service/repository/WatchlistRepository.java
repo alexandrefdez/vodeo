@@ -14,4 +14,6 @@ public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
     Page<Watchlist> findByUserOrderByIdDesc(User user, Pageable pageable);
 
     Optional<Watchlist> findByUserAndMediaIdAndMediaType(User user, Long mediaId, String mediaType);
+
+    void deleteByUser(User user);
 }

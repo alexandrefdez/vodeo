@@ -52,9 +52,15 @@ const AdminDashboard = () => {
         <div className="flex gap-4">
           <button 
             onClick={() => navigate('/admin')}
-            className="text-slate-300 hover:text-white transition-colors border border-slate-700 px-4 py-2 rounded cursor-pointer font-bold bg-slate-800 hover:bg-slate-700"
+            className="bg-sky-500/10 text-sky-400 border border-sky-500 hover:bg-sky-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold flex items-center gap-2"
           >
-            ⚙️ Volver a Gestión
+            🎬 Subir Contenido
+          </button>
+          <button 
+            onClick={() => navigate('/admin/users')}
+            className="bg-purple-500/10 text-purple-400 border border-purple-500 hover:bg-purple-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold flex items-center gap-2"
+          >
+            👥 Usuarios
           </button>
           <button 
             onClick={() => navigate('/catalog')}
