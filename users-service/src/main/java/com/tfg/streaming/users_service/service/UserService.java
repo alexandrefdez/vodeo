@@ -55,7 +55,7 @@ public class UserService {
         userResponse.setEmail(user.getEmail());
         userResponse.setRole(user.getRole());
 
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
+        String token = jwtService.generateToken(user.getEmail(), user.getRole().name(), user.getUsername());
 
         return new AuthResponse(token, userResponse);
     }
