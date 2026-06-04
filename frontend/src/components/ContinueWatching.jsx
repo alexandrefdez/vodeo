@@ -19,6 +19,7 @@ const ContinueWatching = () => {
 
         const enrichedItems = await Promise.all(historyList.map(async (item) => {
           try {
+            // Si ya lo ha visto entero >95%, no se muestra en seguir viendo
             if (item.duration > 0 && (item.currentTime / item.duration) > 0.95) {
               return null;
             }
@@ -38,7 +39,25 @@ const ContinueWatching = () => {
           }
         }));
 
-        setItems(enrichedItems.filter(item => item !== null));
+        const validItems = enrichedItems.filter(item => item !== null);
+
+        // Deduplicar episodios de la misma serie
+        const seenSeries = new Set();
+        const deduplicatedItems = [];
+
+        for (const item of validItems) {
+          if (item.mediaType === 'episode') {
+            const seriesName = item.mediaDetails.seriesTitle;
+            // Si ya tenemos un episodio más reciente de esta serie en la lista se salta
+            if (seenSeries.has(seriesName)) {
+              continue; 
+            }
+            seenSeries.add(seriesName);
+          }
+          deduplicatedItems.push(item);
+        }
+
+        setItems(deduplicatedItems);
       } catch (error) {
         console.error("Error al cargar historial", error);
       } finally {
@@ -72,7 +91,7 @@ const ContinueWatching = () => {
           const progressPercentage = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
           
           const title = mediaType === 'episode' 
-            ? `Ep. ${mediaDetails.episodeNumber}: ${mediaDetails.title}` 
+            ? `${mediaDetails.seriesTitle || 'Serie'} - Ep. ${mediaDetails.episodeNumber}` 
             : mediaDetails.title;
 
           return (
@@ -96,7 +115,7 @@ const ContinueWatching = () => {
                 
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                   <div className="w-12 h-12 bg-white/10 backdrop-blur-sm border border-white/30 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white text-xl">▶</span>
+                    <span className="text-white text-xl pl-1">▶</span>
                   </div>
                 </div>
               </div>
@@ -109,7 +128,7 @@ const ContinueWatching = () => {
               </div>
 
               <div className="p-4">
-                <p className="text-slate-200 font-semibold truncate group-hover:text-white transition-colors">
+                <p className="text-slate-200 font-semibold truncate group-hover:text-white transition-colors" title={title}>
                   {title}
                 </p>
                 <p className="text-xs text-slate-400 mt-1">

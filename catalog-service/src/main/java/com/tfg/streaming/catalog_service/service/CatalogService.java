@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -138,8 +137,6 @@ public class CatalogService {
     }
 
     public void deleteSeries(Long id) {
-        // En una app real iterarías sobre los episodios para borrar los .mp4 físicos,
-        // aquí delegamos el borrado en cascada de BBDD
         seriesRepository.deleteById(id);
     }
 
@@ -294,6 +291,13 @@ public class CatalogService {
         res.setDuration(episode.getDuration());
         res.setVideoPath(episode.getVideoPath());
         res.setSeasonId(episode.getSeason().getId());
+
+        // EXTRAEMOS LOS DATOS DE LA SERIE PADRE
+        if (episode.getSeason() != null && episode.getSeason().getSeries() != null) {
+            res.setSeriesTitle(episode.getSeason().getSeries().getTitle());
+            res.setPosterUrl(episode.getSeason().getSeries().getPosterUrl());
+        }
+
         return res;
     }
 }
