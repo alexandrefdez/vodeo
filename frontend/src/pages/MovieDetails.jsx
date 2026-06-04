@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { catalogApi, authApi } from '../api/axiosConfig';
 import { AuthContext } from '../context/AuthContext';
+import ReviewSection from '../components/ReviewSection';
 import toast from 'react-hot-toast';
 
 const MovieDetails = () => {
@@ -158,6 +159,9 @@ const MovieDetails = () => {
 
           </div>
         </div>
+
+        <ReviewSection mediaId={movie.id} mediaType="movie" />
+        
       </div>
 
     </div>

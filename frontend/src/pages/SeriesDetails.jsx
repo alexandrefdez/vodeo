@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { catalogApi, streamingApi, authApi } from '../api/axiosConfig';
 import { AuthContext } from '../context/AuthContext';
+import ReviewSection from '../components/ReviewSection';
 import toast from 'react-hot-toast';
 
 const SeriesDetails = () => {
@@ -321,6 +322,8 @@ const SeriesDetails = () => {
           )}
         </div>
 
+        <ReviewSection mediaId={series.id} mediaType="series" />
+        
       </div>
     </div>
   );
