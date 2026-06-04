@@ -11,4 +11,6 @@ public class EpisodeResponse {
     private Integer duration;
     private String videoPath;
     private Long seasonId;
+    private String seriesTitle;
+    private String posterUrl;
 }
