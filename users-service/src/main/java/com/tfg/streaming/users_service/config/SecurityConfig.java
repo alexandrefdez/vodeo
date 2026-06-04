@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers("/api/users/register", "/api/users/login").permitAll()
-                        .requestMatchers("/api/users/watchlist", "/api/users/watchlist/**")
+                        .requestMatchers("/api/users/watchlist", "/api/users/watchlist/**", "/api/users/history/**")
                         .hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
                         .requestMatchers("/api/users/count").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated())

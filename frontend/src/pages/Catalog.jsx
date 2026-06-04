@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { catalogApi, authApi } from '../api/axiosConfig';
+import ContinueWatching from '../components/ContinueWatching';
 import toast from 'react-hot-toast';
 
 const Catalog = () => {
@@ -170,6 +171,9 @@ const Catalog = () => {
           </button>
         </div>
       </div>
+
+      {/* SECCIÓN DE "SEGUIR VIENDO" */}
+      <ContinueWatching />
 
       {/* MENÚ DE NAVEGACIÓN PRINCIPAL */}
       <div className="flex justify-center mb-10">

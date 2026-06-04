@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { catalogApi } from '../api/axiosConfig';
+import { catalogApi, authApi } from '../api/axiosConfig';
+import toast from 'react-hot-toast';
 
 const Player = () => {
   const { id } = useParams();
@@ -8,25 +9,94 @@ const Player = () => {
   const location = useLocation();
   
   const isEpisode = location.pathname.includes('/episode/');
+  const mediaType = isEpisode ? 'episode' : 'movie';
   const endpoint = isEpisode ? `/episodes/${id}` : `/movies/${id}`;
 
   const [media, setMedia] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const videoRef = useRef(null);
+  const lastSavedTime = useRef(0);
+  const isSeeking = useRef(false);
+
   useEffect(() => {
-    const fetchMedia = async () => {
+    const fetchMediaAndProgress = async () => {
       try {
         const response = await catalogApi.get(endpoint);
         setMedia(response.data);
+
+        const progressRes = await authApi.get(`/history/progress/${mediaType}/${id}`);
+        const savedSeconds = progressRes.data;
+        lastSavedTime.current = savedSeconds;
+
+        if (videoRef.current && savedSeconds > 0) {
+          videoRef.current.currentTime = savedSeconds;
+          
+          const mins = Math.floor(savedSeconds / 60);
+          const secs = String(savedSeconds % 60).padStart(2, '0');
+          toast(`Reanudando desde ${mins}:${secs}`, { icon: '🍿' });
+        }
       } catch (err) {
         setError("No se pudo cargar la información del vídeo.");
       } finally {
         setLoading(false);
       }
     };
-    fetchMedia();
-  }, [id, endpoint]);
+    fetchMediaAndProgress();
+  }, [id, endpoint, mediaType]);
+
+  const saveProgressToBackend = async (currentTime, duration) => {
+    if (!currentTime || !duration || isNaN(currentTime) || isNaN(duration)) return;
+    
+    // Ignorar reproducciones menores a 30 segundos para evitar clics accidentales en el historial
+    if (currentTime < 30) return;
+    
+    try {
+      await authApi.post('/history', {
+        mediaId: parseInt(id),
+        mediaType: mediaType,
+        currentTime: Math.floor(currentTime),
+        duration: Math.floor(duration)
+      });
+      lastSavedTime.current = currentTime;
+    } catch (error) {
+      console.error("Error guardando progreso", error);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (!videoRef.current || isSeeking.current) return;
+    
+    const currentTime = videoRef.current.currentTime;
+    const duration = videoRef.current.duration;
+    
+    if (Math.abs(currentTime - lastSavedTime.current) >= 10) {
+      saveProgressToBackend(currentTime, duration);
+    }
+  };
+
+  const handlePause = () => {
+    if (videoRef.current) {
+      saveProgressToBackend(videoRef.current.currentTime, videoRef.current.duration);
+    }
+  };
+
+  const handleSeeking = () => { 
+    isSeeking.current = true; 
+  };
+  
+  const handleSeeked = () => { 
+    isSeeking.current = false; 
+  };
+
+  useEffect(() => {
+    return () => {
+      if (videoRef.current && videoRef.current.currentTime > 0) {
+        saveProgressToBackend(videoRef.current.currentTime, videoRef.current.duration);
+      }
+    };
+  }, []);
 
   // Recuperamos el token para inyectarlo en la petición del vídeo nativo
   const token = localStorage.getItem('token');
@@ -64,7 +134,18 @@ const Player = () => {
         )}
 
         {!loading && !error && media?.videoPath && (
-          <video controls autoPlay controlsList="nodownload" className="w-full h-full object-contain bg-black outline-none" src={videoSrc}>
+          <video 
+            ref={videoRef}
+            controls 
+            autoPlay 
+            controlsList="nodownload" 
+            className="w-full h-full object-contain bg-black outline-none" 
+            src={videoSrc}
+            onTimeUpdate={handleTimeUpdate}
+            onPause={handlePause}
+            onSeeking={handleSeeking}
+            onSeeked={handleSeeked}
+          >
             Tu navegador no soporta la reproducción de vídeo.
           </video>
         )}
