@@ -17,4 +17,6 @@ public interface PlaybackHistoryRepository extends JpaRepository<PlaybackHistory
 
     // Obtener los últimos vídeos vistos por el usuario
     Page<PlaybackHistory> findByUserOrderByUpdatedAtDesc(User user, Pageable pageable);
+
+    void deleteByUser(User user);
 }

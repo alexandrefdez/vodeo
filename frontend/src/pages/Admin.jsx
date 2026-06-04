@@ -169,7 +169,15 @@ const Admin = () => {
         
         <div className="flex gap-4 items-center">
           
-          {/* BOTÓN NUEVO PARA IR A LA SUB-PANTALLA DE DASHBOARD */}
+          {/* BOTÓN PESTAÑA DE GESTIÓN DE USUARIOS */}
+          <button 
+            onClick={() => navigate('/admin/users')}
+            className="bg-purple-500/10 text-purple-400 border border-purple-500 hover:bg-purple-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold flex items-center gap-2"
+          >
+            👥 Usuarios
+          </button>
+
+          {/* BOTÓN NUEVO PARA IR A LA PANTALLA DE DASHBOARD */}
           <button 
             onClick={() => navigate('/admin/dashboard')}
             className="bg-indigo-500/10 text-indigo-400 border border-indigo-500 hover:bg-indigo-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold flex items-center gap-2"
