@@ -131,7 +131,7 @@ const MovieDetails = () => {
 
             <div className="flex items-center gap-4 mb-10">
               <button 
-                onClick={() => navigate(`/player/${movie.id}`)}
+                onClick={() => navigate(`/player/movie/${movie.id}`)}
                 className="bg-white hover:bg-slate-200 text-black px-8 py-3 rounded-md font-bold text-lg flex items-center gap-3 transition-colors shadow-lg cursor-pointer"
               >
                 <span className="text-2xl">▶</span> Reproducir
