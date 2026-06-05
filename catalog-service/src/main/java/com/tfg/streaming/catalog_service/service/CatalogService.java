@@ -1,6 +1,7 @@
 package com.tfg.streaming.catalog_service.service;
 
 import com.tfg.streaming.catalog_service.dto.*;
+import com.tfg.streaming.catalog_service.exception.ResourceNotFoundException;
 import com.tfg.streaming.catalog_service.model.Episode;
 import com.tfg.streaming.catalog_service.model.Genre;
 import com.tfg.streaming.catalog_service.model.Movie;
@@ -68,7 +69,8 @@ public class CatalogService {
     }
 
     public MovieResponse getMovieById(Long id) {
-        return toMovieResponse(movieRepository.findById(id).orElseThrow(() -> new RuntimeException("Movie not found")));
+        return toMovieResponse(
+                movieRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Movie not found")));
     }
 
     public Page<MovieResponse> searchMovies(String title, int page, int size) {
@@ -83,7 +85,7 @@ public class CatalogService {
     }
 
     public void deleteMovie(Long id) {
-        Movie movie = movieRepository.findById(id).orElseThrow(() -> new RuntimeException("Movie not found"));
+        Movie movie = movieRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
         deletePhysicalVideo(movie.getVideoPath());
         movieRepository.deleteById(id);
     }
@@ -123,7 +125,7 @@ public class CatalogService {
 
     public SeriesResponse getSeriesById(Long id) {
         return toSeriesResponse(
-                seriesRepository.findById(id).orElseThrow(() -> new RuntimeException("Series not found")));
+                seriesRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Series not found")));
     }
 
     public Page<SeriesResponse> searchSeries(String title, int page, int size) {
@@ -160,7 +162,8 @@ public class CatalogService {
     }
 
     public SeasonResponse addSeason(Long seriesId, SeasonRequest request) {
-        Series series = seriesRepository.findById(seriesId).orElseThrow(() -> new RuntimeException("Series not found"));
+        Series series = seriesRepository.findById(seriesId)
+                .orElseThrow(() -> new ResourceNotFoundException("Series not found"));
         Season season = new Season();
         season.setSeasonNumber(request.getSeasonNumber());
         season.setOverview(request.getOverview());
@@ -169,7 +172,8 @@ public class CatalogService {
     }
 
     public EpisodeResponse addEpisode(Long seasonId, EpisodeRequest request) {
-        Season season = seasonRepository.findById(seasonId).orElseThrow(() -> new RuntimeException("Season not found"));
+        Season season = seasonRepository.findById(seasonId)
+                .orElseThrow(() -> new ResourceNotFoundException("Season not found"));
         Episode ep = new Episode();
         ep.setEpisodeNumber(request.getEpisodeNumber());
         ep.setTitle(request.getTitle());
@@ -181,19 +185,20 @@ public class CatalogService {
     }
 
     public void deleteEpisode(Long id) {
-        Episode ep = episodeRepository.findById(id).orElseThrow(() -> new RuntimeException("Episode not found"));
+        Episode ep = episodeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Episode not found"));
         deletePhysicalVideo(ep.getVideoPath());
         episodeRepository.deleteById(id);
     }
 
     public EpisodeResponse getEpisodeById(Long id) {
         return toEpisodeResponse(
-                episodeRepository.findById(id).orElseThrow(() -> new RuntimeException("Episode not found")));
+                episodeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Episode not found")));
     }
 
     public EpisodeResponse getNextEpisode(Long currentEpisodeId) {
         Episode currentEp = episodeRepository.findById(currentEpisodeId)
-                .orElseThrow(() -> new RuntimeException("Episode not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Episode not found"));
 
         // Intentar buscar el siguiente episodio en la MISMA temporada
         Optional<Episode> nextInSeason = episodeRepository

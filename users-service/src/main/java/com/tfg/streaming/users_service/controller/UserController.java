@@ -40,12 +40,7 @@ public class UserController {
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(@RequestBody UpdateProfileRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        try {
-            return ResponseEntity.ok(userService.updateProfile(email, request));
-        } catch (RuntimeException e) {
-            // Si la contraseña actual es incorrecta, devolvemos un 400 Bad Request
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(userService.updateProfile(email, request));
     }
 
     @GetMapping("/count")

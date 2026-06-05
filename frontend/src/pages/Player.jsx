@@ -24,7 +24,7 @@ const Player = () => {
   const videoRef = useRef(null);
   const lastSavedTime = useRef(0);
   const isSeeking = useRef(false);
-  const progressToResume = useRef(0); // Nuevo ref para guardar el progreso inicial
+  const progressToResume = useRef(0); // Ref para guardar el progreso inicial
 
   useEffect(() => {
     // Resetear estados al cambiar de episodio
@@ -38,7 +38,6 @@ const Player = () => {
         const response = await catalogApi.get(endpoint);
         setMedia(response.data);
 
-        // Fetch del siguiente episodio (Autoplay) silencioso
         if (isEpisode) {
           try {
             const nextRes = await catalogApi.get(`/episodes/${id}/next`);
@@ -65,7 +64,7 @@ const Player = () => {
     fetchMediaAndProgress();
   }, [id, endpoint, mediaType, isEpisode]);
 
-  // Lógica de la Cuenta Atrás (Autoplay)
+  // Lógica de la Cuenta Atrás
   useEffect(() => {
     let timer;
     if (showAutoplay && countdown > 0) {
@@ -120,7 +119,7 @@ const Player = () => {
     isSeeking.current = false; 
   };
 
-  // NUEVO EVENTO: Se dispara cuando el vídeo carga sus datos (duración, etc)
+  // Evento que se dispara cuando el vídeo carga sus datos
   const handleLoadedMetadata = () => {
     if (!videoRef.current) return;
     
@@ -128,7 +127,7 @@ const Player = () => {
     const savedSeconds = progressToResume.current;
 
     if (savedSeconds > 0) {
-      // PREVENCIÓN BUCLE: Si ya se vio casi entero (>95%), reiniciar desde 0
+      // PREVENCION de bucle por si ya se vio casi entero mas de 95% entonces reiniciar desde 0
       if (savedSeconds / duration > 0.95) {
         videoRef.current.currentTime = 0;
         lastSavedTime.current = 0;
@@ -141,11 +140,11 @@ const Player = () => {
     }
   };
 
-  // NUEVO EVENTO: Finalización del vídeo y Autoplay
+  // Finalización del vídeo y Autoplay
   const handleVideoEnded = () => {
     if (nextEpisode) {
       if (document.fullscreenElement) {
-        document.exitFullscreen(); // Salimos de pantalla completa por UX
+        document.exitFullscreen(); // Salir de pantalla completa
       }
       setShowAutoplay(true);
       setCountdown(10);
@@ -156,7 +155,7 @@ const Player = () => {
 
   const handlePlayNext = () => {
     setShowAutoplay(false);
-    // { replace: true } sobrescribe el historial para que "Volver" te saque a la serie
+    // { replace: true } sobrescribe el historial para que el botón Volver no regrese al episodio anterior
     navigate(`/player/episode/${nextEpisode.id}`, { replace: true });
   };
 
