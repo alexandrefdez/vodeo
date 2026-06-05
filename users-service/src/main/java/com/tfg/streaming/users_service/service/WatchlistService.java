@@ -1,6 +1,7 @@
 package com.tfg.streaming.users_service.service;
 
 import com.tfg.streaming.users_service.dto.WatchlistItemDto;
+import com.tfg.streaming.users_service.exception.ResourceNotFoundException;
 import com.tfg.streaming.users_service.model.User;
 import com.tfg.streaming.users_service.model.Watchlist;
 import com.tfg.streaming.users_service.repository.UserRepository;
@@ -21,7 +22,7 @@ public class WatchlistService {
 
     public void toggleWatchlist(String email, Long mediaId, String mediaType) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Optional<Watchlist> existing = watchlistRepository.findByUserAndMediaIdAndMediaType(user, mediaId, mediaType);
 
@@ -38,7 +39,7 @@ public class WatchlistService {
 
     public Page<WatchlistItemDto> getUserWatchlist(String email, int page, int size) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return watchlistRepository.findByUserOrderByIdDesc(user, PageRequest.of(page, size))
                 .map(w -> new WatchlistItemDto(w.getMediaId(), w.getMediaType()));

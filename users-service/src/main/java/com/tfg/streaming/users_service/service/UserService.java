@@ -6,6 +6,8 @@ import com.tfg.streaming.users_service.config.JwtService;
 import com.tfg.streaming.users_service.dto.AuthResponse;
 import com.tfg.streaming.users_service.dto.LoginRequest;
 import com.tfg.streaming.users_service.dto.UserResponse;
+import com.tfg.streaming.users_service.exception.ConflictException;
+import com.tfg.streaming.users_service.exception.ResourceNotFoundException;
 import com.tfg.streaming.users_service.model.User;
 import com.tfg.streaming.users_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,7 @@ public class UserService {
 
     public UserResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already in use");
+            throw new ConflictException("Email already in use");
         }
 
         User user = new User();
@@ -43,10 +45,10 @@ public class UserService {
 
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            throw new ConflictException("Invalid password");
         }
 
         UserResponse userResponse = new UserResponse();
@@ -62,7 +64,7 @@ public class UserService {
 
     public UserResponse getUserProfile(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         UserResponse response = new UserResponse();
         response.setId(user.getId());
@@ -74,7 +76,7 @@ public class UserService {
 
     public UserResponse updateProfile(String email, UpdateProfileRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
             String newUsername = request.getUsername().trim();
@@ -86,7 +88,7 @@ public class UserService {
         if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
             if (request.getCurrentPassword() == null
                     || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-                throw new RuntimeException("La contraseña actual es incorrecta");
+                throw new ConflictException("Invalid password");
             }
             user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
