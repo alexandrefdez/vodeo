@@ -24,6 +24,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -188,6 +189,38 @@ public class CatalogService {
     public EpisodeResponse getEpisodeById(Long id) {
         return toEpisodeResponse(
                 episodeRepository.findById(id).orElseThrow(() -> new RuntimeException("Episode not found")));
+    }
+
+    public EpisodeResponse getNextEpisode(Long currentEpisodeId) {
+        Episode currentEp = episodeRepository.findById(currentEpisodeId)
+                .orElseThrow(() -> new RuntimeException("Episode not found"));
+
+        // Intentar buscar el siguiente episodio en la MISMA temporada
+        Optional<Episode> nextInSeason = episodeRepository
+                .findFirstBySeasonIdAndEpisodeNumberGreaterThanOrderByEpisodeNumberAsc(
+                        currentEp.getSeason().getId(), currentEp.getEpisodeNumber());
+
+        if (nextInSeason.isPresent()) {
+            return toEpisodeResponse(nextInSeason.get());
+        }
+
+        // Si no hay más en esta temporada, buscar la SIGUIENTE temporada de la
+        // serie
+        Optional<Season> nextSeason = seasonRepository
+                .findFirstBySeriesIdAndSeasonNumberGreaterThanOrderBySeasonNumberAsc(
+                        currentEp.getSeason().getSeries().getId(), currentEp.getSeason().getSeasonNumber());
+
+        if (nextSeason.isPresent()) {
+            // Devolver el primer episodio de esa nueva temporada
+            Optional<Episode> firstEpNextSeason = episodeRepository
+                    .findFirstBySeasonIdOrderByEpisodeNumberAsc(nextSeason.get().getId());
+            if (firstEpNextSeason.isPresent()) {
+                return toEpisodeResponse(firstEpNextSeason.get());
+            }
+        }
+
+        // Ha visto el último episodio de la última temporada por lo que fin de la serie
+        return null;
     }
 
     // ==========================================

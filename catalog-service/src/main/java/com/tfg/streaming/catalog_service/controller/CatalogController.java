@@ -160,6 +160,18 @@ public class CatalogController {
         return ResponseEntity.ok(data);
     }
 
+    @GetMapping("/episodes/{id}/next")
+    public ResponseEntity<EpisodeResponse> getNextEpisode(@PathVariable Long id) {
+        EpisodeResponse nextEpisode = catalogService.getNextEpisode(id);
+
+        if (nextEpisode == null) {
+            // Devolver 204 No Content si la serie se ha terminado
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(nextEpisode);
+    }
+
     // ==========================================
     // GLOBAL
     // ==========================================
