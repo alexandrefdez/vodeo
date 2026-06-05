@@ -1,6 +1,8 @@
 package com.tfg.streaming.catalog_service.dto;
 
 import lombok.Data;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -14,10 +16,12 @@ public class MovieResponse {
     private String posterUrl;
     private List<String> genres;
 
-    // Nuevos campos para pagina de detalles
+    // Campos para pagina de detalles
     private String backdropUrl;
     private Double tmdbRating;
     private String contentRating;
     private String director;
     private String castCrew;
+
+    private List<SubtitleResponse> subtitles = new ArrayList<>();
 }

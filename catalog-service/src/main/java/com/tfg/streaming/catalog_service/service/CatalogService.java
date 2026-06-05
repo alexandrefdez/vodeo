@@ -285,6 +285,18 @@ public class CatalogService {
         response.setDirector(movie.getDirector());
         response.setCastCrew(movie.getCastCrew());
         response.setGenres(movie.getGenres().stream().map(Genre::getName).toList());
+
+        if (movie.getSubtitles() != null) {
+            response.setSubtitles(movie.getSubtitles().stream().map(sub -> {
+                SubtitleResponse subRes = new SubtitleResponse();
+                subRes.setId(sub.getId());
+                subRes.setLanguage(sub.getLanguage());
+                subRes.setLanguageCode(sub.getLanguageCode());
+                subRes.setSubtitlePath(sub.getSubtitlePath());
+                return subRes;
+            }).toList());
+        }
+
         return response;
     }
 
@@ -334,6 +346,17 @@ public class CatalogService {
         if (episode.getSeason() != null && episode.getSeason().getSeries() != null) {
             res.setSeriesTitle(episode.getSeason().getSeries().getTitle());
             res.setPosterUrl(episode.getSeason().getSeries().getPosterUrl());
+        }
+
+        if (episode.getSubtitles() != null) {
+            res.setSubtitles(episode.getSubtitles().stream().map(sub -> {
+                SubtitleResponse subRes = new SubtitleResponse();
+                subRes.setId(sub.getId());
+                subRes.setLanguage(sub.getLanguage());
+                subRes.setLanguageCode(sub.getLanguageCode());
+                subRes.setSubtitlePath(sub.getSubtitlePath());
+                return subRes;
+            }).toList());
         }
 
         return res;

@@ -1,5 +1,8 @@
 package com.tfg.streaming.catalog_service.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -13,4 +16,6 @@ public class EpisodeResponse {
     private Long seasonId;
     private String seriesTitle;
     private String posterUrl;
+
+    private List<SubtitleResponse> subtitles = new ArrayList<>();
 }
