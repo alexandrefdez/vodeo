@@ -55,4 +55,12 @@ public class StreamingService {
             throw new RuntimeException("Error al borrar el archivo físico del disco");
         }
     }
+
+    public Resource getFileAsResource(String filename) throws IOException {
+        Path filePath = Paths.get(storagePath).resolve(filename).normalize();
+        if (!Files.exists(filePath)) {
+            throw new IOException("Archivo de subtítulo no encontrado");
+        }
+        return new FileSystemResource(filePath);
+    }
 }

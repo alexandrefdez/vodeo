@@ -8,6 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.tfg.streaming.catalog_service.dto.SubtitleRequest;
+import com.tfg.streaming.catalog_service.dto.SubtitleResponse;
+
 import java.util.List;
 
 @RestController
@@ -170,6 +173,27 @@ public class CatalogController {
         }
 
         return ResponseEntity.ok(nextEpisode);
+    }
+
+    // ==========================================
+    // SUBTÍTULOS
+    // ==========================================
+    @PostMapping("/movies/{id}/subtitles")
+    public ResponseEntity<SubtitleResponse> addSubtitleToMovie(@PathVariable Long id,
+            @RequestBody SubtitleRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(catalogService.addSubtitleToMovie(id, request));
+    }
+
+    @PostMapping("/episodes/{id}/subtitles")
+    public ResponseEntity<SubtitleResponse> addSubtitleToEpisode(@PathVariable Long id,
+            @RequestBody SubtitleRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(catalogService.addSubtitleToEpisode(id, request));
+    }
+
+    @DeleteMapping("/subtitles/{id}")
+    public ResponseEntity<Void> deleteSubtitle(@PathVariable Long id) {
+        catalogService.deleteSubtitle(id);
+        return ResponseEntity.noContent().build();
     }
 
     // ==========================================

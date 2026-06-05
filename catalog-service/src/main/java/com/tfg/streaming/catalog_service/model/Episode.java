@@ -1,5 +1,8 @@
 package com.tfg.streaming.catalog_service.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -28,4 +31,7 @@ public class Episode {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id", nullable = false)
     private Season season;
+
+    @OneToMany(mappedBy = "episode", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Subtitle> subtitles = new ArrayList<>();
 }
