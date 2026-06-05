@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { catalogApi, authApi } from '../api/axiosConfig';
+import { catalogApi, streamingApi, authApi } from '../api/axiosConfig';
 import { AuthContext } from '../context/AuthContext';
 import ReviewSection from '../components/ReviewSection';
 import toast from 'react-hot-toast';
@@ -14,6 +14,10 @@ const MovieDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  const [showSubtitleForm, setShowSubtitleForm] = useState(false);
+  const [subtitleData, setSubtitleData] = useState({ language: 'Español', languageCode: 'es', file: null });
+  const [isUploadingSub, setIsUploadingSub] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -52,6 +56,48 @@ const MovieDetails = () => {
       setIsFavorite(previousState); 
       toast.error("Error al sincronizar con el servidor");
     }
+  };
+
+  // Función Admin: Subir Subtítulos
+  const handleUploadSubtitle = async (e) => {
+    e.preventDefault();
+    if (!subtitleData.file) return toast.error("Selecciona un archivo .vtt");
+    
+    setIsUploadingSub(true);
+    const toastId = toast.loading("Subiendo subtítulo...");
+
+    try {
+      const formData = new FormData();
+      formData.append('file', subtitleData.file);
+      const uploadRes = await streamingApi.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+
+      const res = await catalogApi.post(`/movies/${id}/subtitles`, {
+        language: subtitleData.language,
+        languageCode: subtitleData.languageCode,
+        subtitlePath: uploadRes.data.videoPath
+      });
+
+      setMovie(prev => ({ ...prev, subtitles: [...(prev.subtitles || []), res.data] }));
+      toast.dismiss(toastId);
+      toast.success("Subtítulo añadido");
+      setShowSubtitleForm(false);
+      setSubtitleData({ language: 'Español', languageCode: 'es', file: null });
+    } catch (err) {
+      toast.dismiss(toastId);
+      toast.error("Error al subir subtítulo");
+    } finally { 
+      setIsUploadingSub(false); 
+    }
+  };
+
+  // Función Admin: Borrar Subtítulos
+  const handleDeleteSubtitle = async (subId) => {
+    if(!window.confirm("¿Seguro que quieres borrar este subtítulo?")) return;
+    try {
+      await catalogApi.delete(`/subtitles/${subId}`);
+      setMovie(prev => ({ ...prev, subtitles: prev.subtitles.filter(s => s.id !== subId) }));
+      toast.success("Subtítulo borrado");
+    } catch (err) { toast.error("Error al borrar subtítulo"); }
   };
 
   if (loading) {
@@ -156,6 +202,53 @@ const MovieDetails = () => {
                 <span className="text-white font-medium">{movie.castCrew || 'Desconocido'}</span>
               </div>
             </div>
+
+            {/* PANEL DE CONTROL DE SUBTÍTULOS (SOLO ADMIN) */}
+            {user?.role === 'ADMIN' && (
+              <div className="mt-8 border-t border-slate-700/50 pt-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold text-sky-400">Gestión de Subtítulos</h3>
+                  <button onClick={() => setShowSubtitleForm(!showSubtitleForm)} className="bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1 rounded text-sm font-bold transition-colors cursor-pointer">
+                    + Añadir Subtítulo
+                  </button>
+                </div>
+
+                {showSubtitleForm && (
+                  <form onSubmit={handleUploadSubtitle} className="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-4 flex flex-col gap-4">
+                    <div className="flex gap-4">
+                      <div className="flex flex-col w-1/3">
+                        <label className="text-xs text-slate-400 mb-1">Idioma</label>
+                        <input type="text" placeholder="Ej: Español" value={subtitleData.language} onChange={e => setSubtitleData({...subtitleData, language: e.target.value})} className="p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-sky-500" required />
+                      </div>
+                      <div className="flex flex-col w-1/4">
+                        <label className="text-xs text-slate-400 mb-1">Código ISO</label>
+                        <input type="text" placeholder="Ej: es" value={subtitleData.languageCode} onChange={e => setSubtitleData({...subtitleData, languageCode: e.target.value})} className="p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-sky-500" required />
+                      </div>
+                      <div className="flex flex-col flex-grow">
+                        <label className="text-xs text-slate-400 mb-1">Archivo (.vtt)</label>
+                        <input type="file" accept=".vtt,.srt" onChange={e => setSubtitleData({...subtitleData, file: e.target.files[0]})} className="w-full p-1.5 bg-slate-900 border border-slate-700 rounded text-slate-300 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-sky-500 file:text-white cursor-pointer" required />
+                      </div>
+                    </div>
+                    <button type="submit" disabled={isUploadingSub} className="bg-sky-500 hover:bg-sky-600 disabled:bg-slate-700 py-2 rounded font-bold transition-colors cursor-pointer text-sm">
+                      {isUploadingSub ? 'Subiendo...' : 'Guardar Subtítulo'}
+                    </button>
+                  </form>
+                )}
+
+                {movie.subtitles && movie.subtitles.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {movie.subtitles.map(sub => (
+                      <span key={sub.id} className="bg-slate-800 border border-slate-600 px-3 py-1 rounded-full text-xs flex items-center gap-2 text-slate-300">
+                        {sub.language} ({sub.languageCode})
+                        <button onClick={() => handleDeleteSubtitle(sub.id)} className="text-slate-500 hover:text-red-500 font-bold ml-1 cursor-pointer">✕</button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">No hay subtítulos subidos.</p>
+                )}
+              </div>
+            )}
 
           </div>
         </div>

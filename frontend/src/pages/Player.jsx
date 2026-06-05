@@ -255,6 +255,7 @@ const Player = () => {
             controlsList="nodownload" 
             className="w-full h-full object-contain bg-black outline-none" 
             src={videoSrc}
+            crossOrigin="anonymous"
             onLoadedMetadata={handleLoadedMetadata}
             onTimeUpdate={handleTimeUpdate}
             onPause={handlePause}
@@ -262,6 +263,16 @@ const Player = () => {
             onSeeked={handleSeeked}
             onEnded={handleVideoEnded}
           >
+            {media?.subtitles?.map((sub, index) => (
+              <track 
+                key={sub.id} 
+                kind="subtitles" 
+                srcLang={sub.languageCode} 
+                label={sub.language} 
+                src={`${import.meta.env.VITE_STREAMING_API_URL}/subtitles/${sub.subtitlePath}?token=${token}`}
+                default={index === 0} 
+              />
+            ))}
             Tu navegador no soporta la reproducción de vídeo.
           </video>
         )}

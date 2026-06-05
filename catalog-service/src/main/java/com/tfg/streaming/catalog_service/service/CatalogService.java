@@ -7,11 +7,14 @@ import com.tfg.streaming.catalog_service.model.Genre;
 import com.tfg.streaming.catalog_service.model.Movie;
 import com.tfg.streaming.catalog_service.model.Season;
 import com.tfg.streaming.catalog_service.model.Series;
+import com.tfg.streaming.catalog_service.model.Subtitle;
 import com.tfg.streaming.catalog_service.repository.EpisodeRepository;
 import com.tfg.streaming.catalog_service.repository.GenreRepository;
 import com.tfg.streaming.catalog_service.repository.MovieRepository;
 import com.tfg.streaming.catalog_service.repository.SeasonRepository;
 import com.tfg.streaming.catalog_service.repository.SeriesRepository;
+import com.tfg.streaming.catalog_service.repository.SubtitleRepository;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -36,6 +39,7 @@ public class CatalogService {
     private final SeasonRepository seasonRepository;
     private final EpisodeRepository episodeRepository;
     private final GenreRepository genreRepository;
+    private final SubtitleRepository subtitleRepository;
     private final MovieMetadataService movieMetadataService;
 
     @Value("${streaming-service.url:http://localhost:8083/api/streaming}")
@@ -359,6 +363,51 @@ public class CatalogService {
             }).toList());
         }
 
+        return res;
+    }
+
+    // ==========================================
+    // SUBTÍTULOS
+    // ==========================================
+    public SubtitleResponse addSubtitleToMovie(Long movieId, SubtitleRequest request) {
+        Movie movie = movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Película no encontrada"));
+
+        Subtitle subtitle = new Subtitle();
+        subtitle.setLanguage(request.getLanguage());
+        subtitle.setLanguageCode(request.getLanguageCode());
+        subtitle.setSubtitlePath(request.getSubtitlePath());
+        subtitle.setMovie(movie);
+
+        return toSubtitleResponse(subtitleRepository.save(subtitle));
+    }
+
+    public SubtitleResponse addSubtitleToEpisode(Long episodeId, SubtitleRequest request) {
+        Episode episode = episodeRepository.findById(episodeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Episodio no encontrado"));
+
+        Subtitle subtitle = new Subtitle();
+        subtitle.setLanguage(request.getLanguage());
+        subtitle.setLanguageCode(request.getLanguageCode());
+        subtitle.setSubtitlePath(request.getSubtitlePath());
+        subtitle.setEpisode(episode);
+
+        return toSubtitleResponse(subtitleRepository.save(subtitle));
+    }
+
+    public void deleteSubtitle(Long id) {
+        Subtitle subtitle = subtitleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Subtítulo no encontrado"));
+        deletePhysicalVideo(subtitle.getSubtitlePath());
+        subtitleRepository.deleteById(id);
+    }
+
+    private SubtitleResponse toSubtitleResponse(Subtitle sub) {
+        SubtitleResponse res = new SubtitleResponse();
+        res.setId(sub.getId());
+        res.setLanguage(sub.getLanguage());
+        res.setLanguageCode(sub.getLanguageCode());
+        res.setSubtitlePath(sub.getSubtitlePath());
         return res;
     }
 }
