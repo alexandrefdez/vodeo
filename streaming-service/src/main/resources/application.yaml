@@ -8,6 +8,11 @@ spring:
     multipart:
       max-file-size: 2000MB
       max-request-size: 2000MB
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 
 videos:
   storage-path: C:/vodeo-videos/
