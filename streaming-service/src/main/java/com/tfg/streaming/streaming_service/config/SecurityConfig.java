@@ -35,7 +35,8 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/streaming/upload").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/streaming/video").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/streaming/play/**", "/api/streaming/subtitles/**")
+                        .requestMatchers(HttpMethod.GET, "/api/streaming/play/**", "/api/streaming/subtitles/**",
+                                "/api/streaming/hls/**")
                         .hasAnyAuthority("ROLE_USER", "ROLE_ADMIN").anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
