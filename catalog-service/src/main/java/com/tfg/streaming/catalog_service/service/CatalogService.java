@@ -144,6 +144,16 @@ public class CatalogService {
     }
 
     public void deleteSeries(Long id) {
+        Series series = seriesRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Series not found"));
+
+        // Borrar fisicamente los videos de todos los episodios de todas las temporadas
+        series.getSeasons().forEach(season -> season.getEpisodes().forEach(ep -> {
+            if (ep.getVideoPath() != null) {
+                deletePhysicalVideo(ep.getVideoPath());
+            }
+        }));
+
         seriesRepository.deleteById(id);
     }
 

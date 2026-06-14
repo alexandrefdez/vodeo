@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { catalogApi, authApi } from '../api/axiosConfig';
 import toast from 'react-hot-toast';
+import Hls from 'hls.js';
 
 const Player = () => {
   const { id } = useParams();
@@ -15,6 +16,8 @@ const Player = () => {
   const [media, setMedia] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const [hlsStatus, setHlsStatus] = useState("Cargando vídeo...");
 
   // Estados para el Autoplay
   const [nextEpisode, setNextEpisode] = useState(null);
@@ -22,9 +25,20 @@ const Player = () => {
   const [countdown, setCountdown] = useState(10);
 
   const videoRef = useRef(null);
+  const videoReadyRef = useRef(false);
+
+  // Callback ref que detecta cuando el <video> se monta
+  const setVideoRef = (node) => {
+    videoRef.current = node;
+    videoReadyRef.current = !!node;
+  };
+
   const lastSavedTime = useRef(0);
   const isSeeking = useRef(false);
   const progressToResume = useRef(0); // Ref para guardar el progreso inicial
+  
+  const hlsRef = useRef(null);
+  const retryTimeoutRef = useRef(null);
 
   useEffect(() => {
     // Resetear estados al cambiar de episodio
@@ -32,6 +46,7 @@ const Player = () => {
     setCountdown(10);
     setNextEpisode(null);
     progressToResume.current = 0;
+    setHlsStatus("Cargando vídeo...");
 
     const fetchMediaAndProgress = async () => {
       try {
@@ -63,6 +78,97 @@ const Player = () => {
     };
     fetchMediaAndProgress();
   }, [id, endpoint, mediaType, isEpisode]);
+
+  
+  // LOGICA HLS
+  useEffect(() => {
+    if (!media?.videoPath) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) { 
+      console.error('No hay token, redirigiendo al login');
+      navigate('/login'); 
+      return; 
+    }
+
+    const folderName = media.videoPath.includes('.')
+      ? media.videoPath.substring(0, media.videoPath.lastIndexOf('.'))
+      : media.videoPath;
+
+    const m3u8Url = `${import.meta.env.VITE_STREAMING_API_URL}/hls/${folderName}/master.m3u8`;
+
+    const initHls = () => {
+      if (!videoRef.current) {
+        retryTimeoutRef.current = setTimeout(initHls, 100);
+        return;
+      }
+
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+
+      const video = videoRef.current;
+
+      // Si el navegador es Safari tiene soporte nativo
+      if (!Hls.isSupported()) {
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = `${m3u8Url}?token=${token}`;
+          video.addEventListener('loadedmetadata', () => setHlsStatus("Listo"), { once: true });
+        }
+        return;
+      }
+
+      const hls = new Hls({
+        debug: false,
+        xhrSetup: (xhr) => {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        }
+      });
+
+      hlsRef.current = hls;
+
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+        hls.loadSource(m3u8Url);
+      });
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setHlsStatus("Listo");
+        video.play().catch(() => console.log("Autoplay bloqueado"));
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (!data.fatal) return;
+
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR &&
+            data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR) {
+          
+          // El Worker sigue trabajando, lo reintentamos de cero en 4s
+          setHlsStatus("Optimizando calidad de vídeo...");
+          retryTimeoutRef.current = setTimeout(initHls, 4000);
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          hls.recoverMediaError();
+        } else {
+          hls.destroy();
+          hlsRef.current = null;
+          setError("Error irrecuperable en la reproducción HLS.");
+        }
+      });
+    };
+
+    const initTimer = setTimeout(initHls, 50);
+
+    return () => {
+      clearTimeout(initTimer);
+      clearTimeout(retryTimeoutRef.current);
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [media?.videoPath, navigate]);
 
   // Lógica de la Cuenta Atrás
   useEffect(() => {
@@ -171,11 +277,8 @@ const Player = () => {
     };
   }, []);
 
-  // Recuperamos el token para inyectarlo en la petición del vídeo nativo
+  // Recuperamos el token para los subtitulos nativos
   const token = localStorage.getItem('token');
-  const videoSrc = media?.videoPath 
-    ? `${import.meta.env.VITE_STREAMING_API_URL}/play/${media.videoPath}?token=${token}` 
-    : null;
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col relative overflow-hidden">
@@ -238,7 +341,7 @@ const Player = () => {
       {/* Zona central del reproductor */}
       <div className="flex-grow flex items-center justify-center relative w-full h-screen">
         {loading && <p className="text-sky-500 text-xl animate-pulse">Cargando reproductor...</p>}
-        {error && <div className="bg-red-500/20 text-red-200 border border-red-500 p-6 rounded"><p className="text-xl">{error}</p></div>}
+        {error && <div className="bg-red-500/20 text-red-200 border border-red-500 p-6 rounded z-30"><p className="text-xl">{error}</p></div>}
 
         {!loading && !error && !media?.videoPath && (
           <div className="text-center bg-slate-900 border border-slate-700 p-10 rounded-lg max-w-lg">
@@ -247,15 +350,24 @@ const Player = () => {
           </div>
         )}
 
+        {/* OVERLAY DE PROCESAMIENTO HLS */}
+        {hlsStatus !== "Listo" && !error && media?.videoPath && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20">
+            <div className="w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+            <h2 className="text-2xl font-bold text-sky-400 mb-2">{hlsStatus}</h2>
+            <p className="text-slate-400 max-w-md text-center">
+              Preparando la mejor experiencia para tu conexión. El vídeo comenzará en breve.
+            </p>
+          </div>
+        )}
+
         {!loading && !error && media?.videoPath && (
           <video 
-            ref={videoRef}
-            controls={!showAutoplay} 
+            ref={setVideoRef}
+            controls={hlsStatus === "Listo" && !showAutoplay} 
             autoPlay 
             controlsList="nodownload" 
             className="w-full h-full object-contain bg-black outline-none" 
-            src={videoSrc}
-            crossOrigin="anonymous"
             onLoadedMetadata={handleLoadedMetadata}
             onTimeUpdate={handleTimeUpdate}
             onPause={handlePause}
