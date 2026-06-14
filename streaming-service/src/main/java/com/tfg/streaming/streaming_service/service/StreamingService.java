@@ -47,12 +47,34 @@ public class StreamingService {
 
     public void deleteVideo(String fileName) {
         try {
+            // Intentar borrar la carpeta HLS (nombre sin extension)
+            String folderName = fileName.contains(".")
+                    ? fileName.substring(0, fileName.lastIndexOf("."))
+                    : fileName;
+
+            Path hlsFolder = Paths.get(storagePath).resolve(folderName).normalize();
+
+            if (Files.exists(hlsFolder) && Files.isDirectory(hlsFolder)) {
+                // Borrar carpeta y TODO su contenido recursivamente
+                Files.walk(hlsFolder)
+                        .sorted(java.util.Comparator.reverseOrder())
+                        .forEach(path -> {
+                            try {
+                                Files.delete(path);
+                            } catch (Exception ignored) {
+                            }
+                        });
+                return; // Si borramos la carpeta ya esta terminado
+            }
+
+            // Borrar archivo directo por si es un subtitulo, etc
             Path filePath = Paths.get(storagePath).resolve(fileName).normalize();
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
             }
+
         } catch (Exception e) {
-            throw new RuntimeException("Error al borrar el archivo físico del disco");
+            throw new RuntimeException("Error al borrar el archivo o directorio físico del disco", e);
         }
     }
 
