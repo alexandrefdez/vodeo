@@ -284,7 +284,6 @@ const SeriesDetails = () => {
             )}
           </div>
 
-          {/* Formulario Admin: Crear Temporada */}
           {showSeasonForm && (
             <form onSubmit={handleCreateSeason} className="bg-slate-800 p-4 rounded mb-6 flex gap-4 items-center border border-slate-700">
               <input type="number" placeholder="Número de temporada" value={newSeasonNumber} onChange={e => setNewSeasonNumber(e.target.value)} className="p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" required />
