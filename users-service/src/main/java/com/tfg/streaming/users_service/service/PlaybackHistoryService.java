@@ -58,12 +58,20 @@ public class PlaybackHistoryService {
                                 });
         }
 
-        public Integer getProgress(String email, Long mediaId, String mediaType) {
+        public PlaybackHistoryDto getProgress(String email, Long mediaId, String mediaType) {
                 User user = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
                 return historyRepository.findByUserAndMediaIdAndMediaType(user, mediaId, mediaType)
-                                .map(PlaybackHistory::getCurrentTime)
-                                .orElse(0); // Si nunca lo ha visto devuelve el segundo 0
+                                .map(h -> {
+                                        PlaybackHistoryDto dto = new PlaybackHistoryDto();
+                                        dto.setMediaId(h.getMediaId());
+                                        dto.setMediaType(h.getMediaType());
+                                        dto.setCurrentTime(h.getCurrentTime());
+                                        dto.setDuration(h.getDuration());
+                                        dto.setUpdatedAt(h.getUpdatedAt());
+                                        return dto;
+                                })
+                                .orElse(null);
         }
 }

@@ -18,6 +18,8 @@ const MovieDetails = () => {
   const [showSubtitleForm, setShowSubtitleForm] = useState(false);
   const [subtitleData, setSubtitleData] = useState({ language: 'Español', languageCode: 'es', file: null });
   const [isUploadingSub, setIsUploadingSub] = useState(false);
+  
+  const [historyData, setHistoryData] = useState({ currentTime: 0, duration: 0 }); 
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -29,6 +31,13 @@ const MovieDetails = () => {
         const watchlistRes = await authApi.get(`/watchlist?page=0&size=1000`);
         const savedKeys = watchlistRes.data.content.map(w => `${w.mediaType}-${w.mediaId}`);
         setIsFavorite(savedKeys.includes(`movie-${id}`));
+
+        try {
+          const progressRes = await authApi.get(`/history/progress/movie/${id}`);
+          setHistoryData(progressRes.data || { currentTime: 0, duration: 0 });
+        } catch (e) {
+          // Ignorar si no hay progreso guardado
+        }
 
       } catch (err) {
         console.error(err);
@@ -114,6 +123,8 @@ const MovieDetails = () => {
     );
   }
 
+  const isWatched = historyData.duration > 0 && (historyData.currentTime / historyData.duration) > 0.95;
+
   return (
     <div className="min-h-screen bg-slate-900 text-white relative">
       
@@ -159,6 +170,12 @@ const MovieDetails = () => {
               {movie.contentRating && (
                 <span className="border border-slate-500 px-2 py-0.5 rounded text-slate-400">
                   {movie.contentRating}
+                </span>
+              )}
+              {/* ETIQUETA VISTO */}
+              {isWatched && (
+                <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-2 py-0.5 rounded flex items-center gap-1 text-xs font-bold shadow-sm">
+                  ✓ VISTO
                 </span>
               )}
             </div>

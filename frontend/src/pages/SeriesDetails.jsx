@@ -31,6 +31,9 @@ const SeriesDetails = () => {
   const [subtitleData, setSubtitleData] = useState({ language: 'Español', languageCode: 'es', file: null });
   const [isUploadingSub, setIsUploadingSub] = useState(false);
 
+  const [episodesProgress, setEpisodesProgress] = useState({});
+  const [isSeriesCompleted, setIsSeriesCompleted] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -57,6 +60,55 @@ const SeriesDetails = () => {
     };
     fetchData();
   }, [id, refreshKey]);
+
+  // 🛠️ FIX: Descargamos el objeto DTO entero para cada episodio
+  useEffect(() => {
+    const fetchSeasonProgress = async () => {
+      if (!activeSeasonId || seasons.length === 0) return;
+      const activeSeason = seasons.find(s => s.id === activeSeasonId);
+      if (!activeSeason || !activeSeason.episodes) return;
+
+      const newProgress = {};
+      await Promise.all(activeSeason.episodes.map(async (ep) => {
+        try {
+          const res = await authApi.get(`/history/progress/episode/${ep.id}`);
+          newProgress[ep.id] = res.data || { currentTime: 0, duration: 0 };
+        } catch(e) {
+          newProgress[ep.id] = { currentTime: 0, duration: 0 };
+        }
+      }));
+      setEpisodesProgress(newProgress);
+    };
+    fetchSeasonProgress();
+  }, [activeSeasonId, seasons]);
+
+  // 🛠️ FIX: Cálculo "Vía Netflix" usando la duración real del DTO
+  useEffect(() => {
+    const checkSeriesCompletion = async () => {
+
+      if (!seasons || seasons.length === 0) return;
+      
+      const lastSeason = seasons[seasons.length - 1];
+      if (!lastSeason.episodes || lastSeason.episodes.length === 0) return;
+      
+      const lastEp = lastSeason.episodes[lastSeason.episodes.length - 1];
+
+      try {
+        const res = await authApi.get(`/history/progress/episode/${lastEp.id}`);
+        const historyData = res.data || { currentTime: 0, duration: 0 };
+        
+        if (historyData.duration > 0 && (historyData.currentTime / historyData.duration) > 0.95) {
+          setIsSeriesCompleted(true);
+        } else {
+          setIsSeriesCompleted(false);
+        }
+      } catch(e) {
+        setIsSeriesCompleted(false);
+      }
+    };
+    
+    checkSeriesCompletion();
+  }, [seasons]);
 
   const handleToggleWatchlist = async () => {
     const previousState = isFavorite;
@@ -246,6 +298,12 @@ const SeriesDetails = () => {
               <span className="text-emerald-400 font-bold">{series.tmdbRating ? `⭐ ${series.tmdbRating.toFixed(1)}` : '⭐ N/A'}</span>
               <span>{series.startYear}</span>
               {series.contentRating && <span className="border border-slate-500 px-2 py-0.5 rounded text-slate-400">{series.contentRating}</span>}
+              
+              {isSeriesCompleted && (
+                <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-2 py-0.5 rounded flex items-center gap-1 text-xs font-bold shadow-sm">
+                  ✓ VISTA
+                </span>
+              )}
             </div>
             <p className="text-lg text-slate-300 leading-relaxed max-w-3xl mb-6 drop-shadow">{series.description}</p>
             <div className="flex flex-wrap gap-2 mb-8">
@@ -358,13 +416,25 @@ const SeriesDetails = () => {
                   {activeSeason.episodes.length === 0 ? (
                     <p className="text-slate-500 italic py-4">No hay episodios subidos en esta temporada.</p>
                   ) : (
-                    activeSeason.episodes.map(ep => (
+                    activeSeason.episodes.map(ep => {
+                      
+                      const epHistory = episodesProgress[ep.id] || { currentTime: 0, duration: 0 };
+                      const isWatched = epHistory.duration > 0 && (epHistory.currentTime / epHistory.duration) > 0.95;
+
+                      return (
                       <div key={ep.id} className="flex flex-col bg-slate-800/80 hover:bg-slate-800 border border-slate-700 p-4 rounded-lg group transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-6">
                             <span className="text-2xl font-bold text-slate-500 w-8">{ep.episodeNumber}</span>
                             <div>
-                              <h3 className="font-bold text-white text-lg">{ep.title}</h3>
+                              <div className="flex items-center gap-3">
+                                <h3 className="font-bold text-white text-lg">{ep.title}</h3>
+                                {isWatched && (
+                                  <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 px-2 py-0.5 rounded flex items-center gap-1 text-[10px] font-bold shadow-sm uppercase tracking-wider">
+                                    ✓ Visto
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-slate-400 text-sm line-clamp-1 max-w-xl">{ep.description}</p>
                             </div>
                           </div>
@@ -418,7 +488,8 @@ const SeriesDetails = () => {
                           </div>
                         )}
                       </div>
-                    ))
+                    );
+                  })
                   )}
                 </div>
               )}
