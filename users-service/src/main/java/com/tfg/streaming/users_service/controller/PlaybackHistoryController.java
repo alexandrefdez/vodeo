@@ -31,8 +31,15 @@ public class PlaybackHistoryController {
     }
 
     @GetMapping("/progress/{mediaType}/{mediaId}")
-    public ResponseEntity<Integer> getProgress(@PathVariable String mediaType, @PathVariable Long mediaId) {
+    public ResponseEntity<PlaybackHistoryDto> getProgress(@PathVariable String mediaType, @PathVariable Long mediaId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return ResponseEntity.ok(historyService.getProgress(email, mediaId, mediaType));
+        PlaybackHistoryDto progress = historyService.getProgress(email, mediaId, mediaType);
+
+        if (progress == null) {
+            progress = new PlaybackHistoryDto();
+            progress.setCurrentTime(0);
+            progress.setDuration(0);
+        }
+        return ResponseEntity.ok(progress);
     }
 }

@@ -11,19 +11,19 @@ import com.tfg.streaming.catalog_service.model.Subtitle;
 import com.tfg.streaming.catalog_service.repository.EpisodeRepository;
 import com.tfg.streaming.catalog_service.repository.GenreRepository;
 import com.tfg.streaming.catalog_service.repository.MovieRepository;
+import com.tfg.streaming.catalog_service.repository.ReviewRepository;
 import com.tfg.streaming.catalog_service.repository.SeasonRepository;
 import com.tfg.streaming.catalog_service.repository.SeriesRepository;
 import com.tfg.streaming.catalog_service.repository.SubtitleRepository;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,12 +40,10 @@ public class CatalogService {
     private final EpisodeRepository episodeRepository;
     private final GenreRepository genreRepository;
     private final SubtitleRepository subtitleRepository;
+    private final ReviewRepository reviewRepository;
     private final MovieMetadataService movieMetadataService;
 
-    @Value("${streaming-service.url:http://localhost:8083/api/streaming}")
-    private String streamingServiceUrl;
-
-    private final RestClient restClient = RestClient.create();
+    private final RabbitTemplate rabbitTemplate;
 
     // ==========================================
     // PELICULAS
@@ -88,10 +86,20 @@ public class CatalogService {
                 .map(this::toMovieResponse);
     }
 
+    @Transactional
     public void deleteMovie(Long id) {
         Movie movie = movieRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+
         deletePhysicalVideo(movie.getVideoPath());
+        if (movie.getSubtitles() != null) {
+            movie.getSubtitles().forEach(sub -> deletePhysicalVideo(sub.getSubtitlePath()));
+        }
+
+        reviewRepository.deleteByMediaIdAndMediaType(id, "movie");
         movieRepository.deleteById(id);
+
+        // Avisar al Users Service para borrar historial y watchlist
+        rabbitTemplate.convertAndSend("vodeo.exchange", "media.deleted.key", new MediaDeletedEvent("movie", id));
     }
 
     public List<MovieResponse> getMoviesByIds(List<Long> ids) {
@@ -143,18 +151,24 @@ public class CatalogService {
                 .map(this::toSeriesResponse);
     }
 
+    @Transactional
     public void deleteSeries(Long id) {
         Series series = seriesRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Series not found"));
 
         // Borrar fisicamente los videos de todos los episodios de todas las temporadas
         series.getSeasons().forEach(season -> season.getEpisodes().forEach(ep -> {
-            if (ep.getVideoPath() != null) {
-                deletePhysicalVideo(ep.getVideoPath());
+            deletePhysicalVideo(ep.getVideoPath());
+            if (ep.getSubtitles() != null) {
+                ep.getSubtitles().forEach(sub -> deletePhysicalVideo(sub.getSubtitlePath()));
             }
         }));
 
+        reviewRepository.deleteByMediaIdAndMediaType(id, "series");
         seriesRepository.deleteById(id);
+
+        // Avisar al Users Service
+        rabbitTemplate.convertAndSend("vodeo.exchange", "media.deleted.key", new MediaDeletedEvent("series", id));
     }
 
     public List<SeriesResponse> getSeriesByIds(List<Long> ids) {
@@ -201,8 +215,16 @@ public class CatalogService {
     public void deleteEpisode(Long id) {
         Episode ep = episodeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Episode not found"));
+
         deletePhysicalVideo(ep.getVideoPath());
+        if (ep.getSubtitles() != null) {
+            ep.getSubtitles().forEach(sub -> deletePhysicalVideo(sub.getSubtitlePath()));
+        }
+
         episodeRepository.deleteById(id);
+
+        // Avisar al Users Service
+        rabbitTemplate.convertAndSend("vodeo.exchange", "media.deleted.key", new MediaDeletedEvent("episode", id));
     }
 
     public EpisodeResponse getEpisodeById(Long id) {
@@ -264,19 +286,10 @@ public class CatalogService {
     }
 
     private void deletePhysicalVideo(String videoPath) {
-        if (videoPath != null && !videoPath.isEmpty()) {
-            try {
-                ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
-                        .getRequestAttributes();
-                String token = attributes != null ? attributes.getRequest().getHeader("Authorization") : "";
-                restClient.delete()
-                        .uri(streamingServiceUrl + "/video?videoPath=" + videoPath)
-                        .header("Authorization", token)
-                        .retrieve()
-                        .toBodilessEntity();
-            } catch (Exception e) {
-                System.err.println("Advertencia: No se pudo borrar el archivo físico.");
-            }
+        if (videoPath != null && !videoPath.trim().isEmpty()) {
+            // Mandamos el mensaje por RabbitMQ. Si el streaming-service esta caido Rabbit
+            // se lo guarda
+            rabbitTemplate.convertAndSend("vodeo.exchange", "file.delete.key", videoPath);
         }
     }
 

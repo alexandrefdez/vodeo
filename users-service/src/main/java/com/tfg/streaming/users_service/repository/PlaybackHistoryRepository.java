@@ -19,4 +19,6 @@ public interface PlaybackHistoryRepository extends JpaRepository<PlaybackHistory
     Page<PlaybackHistory> findByUserOrderByUpdatedAtDesc(User user, Pageable pageable);
 
     void deleteByUser(User user);
+
+    void deleteByMediaTypeAndMediaId(String mediaType, Long mediaId);
 }

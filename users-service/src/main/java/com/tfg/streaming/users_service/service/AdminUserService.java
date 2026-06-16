@@ -1,6 +1,7 @@
 package com.tfg.streaming.users_service.service;
 
 import com.tfg.streaming.users_service.dto.AdminUserDto;
+import com.tfg.streaming.users_service.dto.UserDeletedEvent;
 import com.tfg.streaming.users_service.exception.ConflictException;
 import com.tfg.streaming.users_service.exception.ResourceNotFoundException;
 import com.tfg.streaming.users_service.model.User;
@@ -8,6 +9,7 @@ import com.tfg.streaming.users_service.repository.PlaybackHistoryRepository;
 import com.tfg.streaming.users_service.repository.UserRepository;
 import com.tfg.streaming.users_service.repository.WatchlistRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final PlaybackHistoryRepository historyRepository;
     private final WatchlistRepository watchlistRepository;
+    private final RabbitTemplate rabbitTemplate;
 
     public List<AdminUserDto> getAllUsers() {
         return userRepository.findAll().stream()
@@ -38,12 +41,19 @@ public class AdminUserService {
             throw new ConflictException("Cannot delete an administrator account");
         }
 
+        // Guardamos el nombre antes de borrarlo para anonimizar las reseñas
+        String usernameToAnonymize = user.getUsername();
+
         // Borramos sus datos privados en cascada
         watchlistRepository.deleteByUser(user);
         historyRepository.deleteByUser(user);
 
         // Borramos la cuenta de usuario
         userRepository.delete(user);
+
+        // Mandamos el mensaje con RabbitMQ para que anonimice las reseñas de este
+        // usuario
+        rabbitTemplate.convertAndSend("vodeo.exchange", "user.deleted.key", new UserDeletedEvent(usernameToAnonymize));
     }
 
     private AdminUserDto mapToDto(User user) {

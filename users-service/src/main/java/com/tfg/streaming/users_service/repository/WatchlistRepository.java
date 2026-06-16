@@ -16,4 +16,6 @@ public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
     Optional<Watchlist> findByUserAndMediaIdAndMediaType(User user, Long mediaId, String mediaType);
 
     void deleteByUser(User user);
+
+    void deleteByMediaTypeAndMediaId(String mediaType, Long mediaId);
 }
