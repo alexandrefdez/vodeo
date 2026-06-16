@@ -94,6 +94,9 @@ const ContinueWatching = () => {
             ? `${mediaDetails.seriesTitle || 'Serie'} - Ep. ${mediaDetails.episodeNumber}` 
             : mediaDetails.title;
 
+          // Asegurar que ponga al menos 1 minuto
+          const remainingMinutes = Math.max(1, Math.floor((duration - currentTime) / 60));
+
           return (
             <Link 
               key={`${mediaType}-${mediaId}`} 
@@ -132,7 +135,7 @@ const ContinueWatching = () => {
                   {title}
                 </p>
                 <p className="text-xs text-slate-400 mt-1">
-                  Restan {Math.floor((duration - currentTime) / 60)} min
+                  Restan {remainingMinutes} min
                 </p>
               </div>
             </Link>

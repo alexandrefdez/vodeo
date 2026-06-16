@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { catalogApi, authApi } from '../api/axiosConfig';
 import ContinueWatching from '../components/ContinueWatching';
+import Recommendations from '../components/Recommendations';
 import toast from 'react-hot-toast';
 
 const Catalog = () => {
@@ -172,8 +173,7 @@ const Catalog = () => {
         </div>
       </div>
 
-      {/* SECCIÓN DE "SEGUIR VIENDO" */}
-      <ContinueWatching />
+      
 
       {/* MENÚ DE NAVEGACIÓN PRINCIPAL */}
       <div className="flex justify-center mb-10">
@@ -345,6 +345,15 @@ const Catalog = () => {
               );
             })}
           </div>
+
+           {/* CONTINUAR VIENDO Y RECOMENDACIONES */}
+          {!searchQuery && !selectedGenre && currentPage === 0 && (
+            <div className="mt-16 border-t border-slate-800 pt-8">
+              <ContinueWatching />
+              {/* Recomendaciones */}
+              <Recommendations type={contentType} />
+            </div>
+          )}
 
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-6 mt-12">

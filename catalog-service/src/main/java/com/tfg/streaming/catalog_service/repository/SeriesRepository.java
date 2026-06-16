@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,8 +21,8 @@ public interface SeriesRepository extends JpaRepository<Series, Long> {
     @EntityGraph(attributePaths = { "genres" })
     Optional<Series> findById(Long id);
 
-    @EntityGraph(attributePaths = { "genres" })
-    Page<Series> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+    @Query(value = "SELECT * FROM series WHERE similarity(title, :title) > 0.15 OR title ILIKE '%' || :title || '%' ORDER BY similarity(title, :title) DESC", countQuery = "SELECT count(*) FROM series WHERE similarity(title, :title) > 0.15 OR title ILIKE '%' || :title || '%'", nativeQuery = true)
+    Page<Series> findByTitleContainingIgnoreCase(@Param("title") String title, Pageable pageable);
 
     @EntityGraph(attributePaths = { "genres" })
     Page<Series> findByGenresName(String genreName, Pageable pageable);

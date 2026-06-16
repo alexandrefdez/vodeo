@@ -77,7 +77,7 @@ public class CatalogService {
 
     public Page<MovieResponse> searchMovies(String title, int page, int size) {
         return movieRepository
-                .findByTitleContainingIgnoreCase(title, PageRequest.of(page, size, Sort.by("id").descending()))
+                .findByTitleContainingIgnoreCase(title, PageRequest.of(page, size))
                 .map(this::toMovieResponse);
     }
 
@@ -142,7 +142,7 @@ public class CatalogService {
 
     public Page<SeriesResponse> searchSeries(String title, int page, int size) {
         return seriesRepository
-                .findByTitleContainingIgnoreCase(title, PageRequest.of(page, size, Sort.by("id").descending()))
+                .findByTitleContainingIgnoreCase(title, PageRequest.of(page, size))
                 .map(this::toSeriesResponse);
     }
 
@@ -373,6 +373,13 @@ public class CatalogService {
         if (episode.getSeason() != null && episode.getSeason().getSeries() != null) {
             res.setSeriesTitle(episode.getSeason().getSeries().getTitle());
             res.setPosterUrl(episode.getSeason().getSeries().getPosterUrl());
+
+            res.setSeriesId(episode.getSeason().getSeries().getId());
+            if (episode.getSeason().getSeries().getGenres() != null) {
+                res.setSeriesGenres(episode.getSeason().getSeries().getGenres().stream()
+                        .map(Genre::getName)
+                        .toList());
+            }
         }
 
         if (episode.getSubtitles() != null) {
