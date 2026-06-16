@@ -17,5 +17,8 @@ public class EpisodeResponse {
     private String seriesTitle;
     private String posterUrl;
 
+    private Long seriesId;
+    private List<String> seriesGenres;
+
     private List<SubtitleResponse> subtitles = new ArrayList<>();
 }
