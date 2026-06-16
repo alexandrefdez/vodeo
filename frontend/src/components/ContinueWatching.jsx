@@ -85,7 +85,7 @@ const ContinueWatching = () => {
       <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
         <span className="text-red-600 text-xl">▶</span> Seguir Viendo
       </h2>
-      <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x">
+      <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar snap-x">
         {items.map((item) => {
           const { mediaDetails, currentTime, duration, mediaType, mediaId } = item;
           const progressPercentage = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;

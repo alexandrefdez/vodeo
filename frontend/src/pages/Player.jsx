@@ -65,7 +65,7 @@ const Player = () => {
         }
 
         const progressRes = await authApi.get(`/history/progress/${mediaType}/${id}`);
-        const savedSeconds = progressRes.data;
+        const savedSeconds = progressRes.data.currentTime || 0;
         
         lastSavedTime.current = savedSeconds;
         progressToResume.current = savedSeconds; // Guardamos el progreso para inyectarlo al cargar el vídeo
@@ -364,6 +364,7 @@ const Player = () => {
         {!loading && !error && media?.videoPath && (
           <video 
             ref={setVideoRef}
+            crossOrigin="anonymous"
             controls={hlsStatus === "Listo" && !showAutoplay} 
             autoPlay 
             controlsList="nodownload" 
