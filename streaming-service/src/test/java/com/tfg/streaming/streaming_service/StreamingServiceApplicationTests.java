@@ -1,4 +1,4 @@
-package com.tfg.streaming.users_service;
+package com.tfg.streaming.streaming_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
