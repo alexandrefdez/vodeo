@@ -19,6 +19,8 @@ import com.tfg.streaming.catalog_service.repository.SubtitleRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -42,12 +44,12 @@ public class CatalogService {
     private final SubtitleRepository subtitleRepository;
     private final ReviewRepository reviewRepository;
     private final MovieMetadataService movieMetadataService;
-
     private final RabbitTemplate rabbitTemplate;
 
     // ==========================================
     // PELICULAS
     // ==========================================
+    @CacheEvict(value = { "movies", "genres" }, allEntries = true)
     public MovieResponse createMovie(MovieRequest request) {
         Movie movie = new Movie();
         movie.setTitle(request.getTitle());
@@ -65,28 +67,33 @@ public class CatalogService {
         return toMovieResponse(movieRepository.save(movie));
     }
 
+    @Cacheable(value = "movies", key = "'page_' + #page + '_size_' + #size")
     public Page<MovieResponse> getAllMovies(int page, int size) {
         return movieRepository.findAll(PageRequest.of(page, size, Sort.by("id").descending()))
                 .map(this::toMovieResponse);
     }
 
+    @Cacheable(value = "movies", key = "'id_' + #id")
     public MovieResponse getMovieById(Long id) {
         return toMovieResponse(
                 movieRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Movie not found")));
     }
 
+    @Cacheable(value = "movies")
     public Page<MovieResponse> searchMovies(String title, int page, int size) {
         return movieRepository
                 .findByTitleContainingIgnoreCase(title, PageRequest.of(page, size))
                 .map(this::toMovieResponse);
     }
 
+    @Cacheable(value = "movies")
     public Page<MovieResponse> getMoviesByGenre(String genreName, int page, int size) {
         return movieRepository.findByGenresName(genreName, PageRequest.of(page, size, Sort.by("id").descending()))
                 .map(this::toMovieResponse);
     }
 
     @Transactional
+    @CacheEvict(value = { "movies", "genres" }, allEntries = true)
     public void deleteMovie(Long id) {
         Movie movie = movieRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
 
@@ -102,6 +109,7 @@ public class CatalogService {
         rabbitTemplate.convertAndSend("vodeo.exchange", "media.deleted.key", new MediaDeletedEvent("movie", id));
     }
 
+    @Cacheable(value = "movies", key = "'batch_' + #ids.toString()")
     public List<MovieResponse> getMoviesByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty())
             return List.of();
@@ -115,6 +123,7 @@ public class CatalogService {
     // ==========================================
     // SERIES
     // ==========================================
+    @CacheEvict(value = { "series", "genres" }, allEntries = true)
     public SeriesResponse createSeries(SeriesRequest request) {
         Series series = new Series();
         series.setTitle(request.getTitle());
@@ -130,28 +139,33 @@ public class CatalogService {
         return toSeriesResponse(seriesRepository.save(series));
     }
 
+    @Cacheable(value = "series", key = "'page_' + #page + '_size_' + #size")
     public Page<SeriesResponse> getAllSeries(int page, int size) {
         return seriesRepository.findAll(PageRequest.of(page, size, Sort.by("id").descending()))
                 .map(this::toSeriesResponse);
     }
 
+    @Cacheable(value = "series", key = "'id_' + #id")
     public SeriesResponse getSeriesById(Long id) {
         return toSeriesResponse(
                 seriesRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Series not found")));
     }
 
+    @Cacheable(value = "series")
     public Page<SeriesResponse> searchSeries(String title, int page, int size) {
         return seriesRepository
                 .findByTitleContainingIgnoreCase(title, PageRequest.of(page, size))
                 .map(this::toSeriesResponse);
     }
 
+    @Cacheable(value = "series")
     public Page<SeriesResponse> getSeriesByGenre(String genreName, int page, int size) {
         return seriesRepository.findByGenresName(genreName, PageRequest.of(page, size, Sort.by("id").descending()))
                 .map(this::toSeriesResponse);
     }
 
     @Transactional
+    @CacheEvict(value = { "series", "genres" }, allEntries = true)
     public void deleteSeries(Long id) {
         Series series = seriesRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Series not found"));
@@ -171,6 +185,7 @@ public class CatalogService {
         rabbitTemplate.convertAndSend("vodeo.exchange", "media.deleted.key", new MediaDeletedEvent("series", id));
     }
 
+    @Cacheable(value = "series", key = "'batch_' + #ids.toString()")
     public List<SeriesResponse> getSeriesByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty())
             return List.of();
@@ -184,11 +199,13 @@ public class CatalogService {
     // ==========================================
     // GESTOR DE TEMPORADAS Y EPISODIOS
     // ==========================================
+    @Cacheable(value = "series", key = "'seasons_series_' + #seriesId")
     public List<SeasonResponse> getSeasonsBySeriesId(Long seriesId) {
         return seasonRepository.findBySeriesIdOrderBySeasonNumberAsc(seriesId).stream()
                 .map(this::toSeasonResponse).toList();
     }
 
+    @CacheEvict(value = "series", allEntries = true)
     public SeasonResponse addSeason(Long seriesId, SeasonRequest request) {
         Series series = seriesRepository.findById(seriesId)
                 .orElseThrow(() -> new ResourceNotFoundException("Series not found"));
@@ -199,6 +216,7 @@ public class CatalogService {
         return toSeasonResponse(seasonRepository.save(season));
     }
 
+    @CacheEvict(value = "series", allEntries = true)
     public EpisodeResponse addEpisode(Long seasonId, EpisodeRequest request) {
         Season season = seasonRepository.findById(seasonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Season not found"));
@@ -212,6 +230,7 @@ public class CatalogService {
         return toEpisodeResponse(episodeRepository.save(ep));
     }
 
+    @CacheEvict(value = "series", allEntries = true)
     public void deleteEpisode(Long id) {
         Episode ep = episodeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Episode not found"));
@@ -227,11 +246,13 @@ public class CatalogService {
         rabbitTemplate.convertAndSend("vodeo.exchange", "media.deleted.key", new MediaDeletedEvent("episode", id));
     }
 
+    @Cacheable(value = "series", key = "'ep_' + #id")
     public EpisodeResponse getEpisodeById(Long id) {
         return toEpisodeResponse(
                 episodeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Episode not found")));
     }
 
+    @Cacheable(value = "series", key = "'next_ep_' + #currentEpisodeId")
     public EpisodeResponse getNextEpisode(Long currentEpisodeId) {
         Episode currentEp = episodeRepository.findById(currentEpisodeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Episode not found"));
@@ -267,6 +288,7 @@ public class CatalogService {
     // ==========================================
     // MAPPERS Y UTILS
     // ==========================================
+    @Cacheable(value = "genres")
     public List<String> getActiveGenres() {
         return genreRepository.findActiveGenres();
     }
@@ -399,6 +421,7 @@ public class CatalogService {
     // ==========================================
     // SUBTÍTULOS
     // ==========================================
+    @CacheEvict(value = { "movies", "genres" }, allEntries = true)
     public SubtitleResponse addSubtitleToMovie(Long movieId, SubtitleRequest request) {
         Movie movie = movieRepository.findById(movieId)
                 .orElseThrow(() -> new ResourceNotFoundException("Película no encontrada"));
@@ -412,6 +435,7 @@ public class CatalogService {
         return toSubtitleResponse(subtitleRepository.save(subtitle));
     }
 
+    @CacheEvict(value = { "series", "genres" }, allEntries = true)
     public SubtitleResponse addSubtitleToEpisode(Long episodeId, SubtitleRequest request) {
         Episode episode = episodeRepository.findById(episodeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Episodio no encontrado"));
@@ -425,6 +449,7 @@ public class CatalogService {
         return toSubtitleResponse(subtitleRepository.save(subtitle));
     }
 
+    @CacheEvict(value = { "movies", "series", "genres" }, allEntries = true)
     public void deleteSubtitle(Long id) {
         Subtitle subtitle = subtitleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Subtítulo no encontrado"));

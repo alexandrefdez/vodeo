@@ -77,7 +77,7 @@ const Catalog = () => {
         const response = await catalogApi.get(url);
         
         if (response.data.content.length === 0 && currentPage > 0) {
-          setCurrentPage(prev => prev - 1);
+          setCurrentPage(prev => Math.max(0, prev - 1)); 
         } else {
           setItems(response.data.content);
           setTotalPages(response.data.totalPages);

@@ -1,10 +1,12 @@
 package com.tfg.streaming.catalog_service.dto;
 
 import lombok.Data;
+
+import java.io.Serializable;
 import java.util.List;
 
 @Data
-public class SeriesResponse {
+public class SeriesResponse implements Serializable {
     private Long id;
     private String title;
     private String description;

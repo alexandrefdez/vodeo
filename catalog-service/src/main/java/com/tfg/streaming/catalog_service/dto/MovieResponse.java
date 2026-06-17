@@ -2,11 +2,12 @@ package com.tfg.streaming.catalog_service.dto;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class MovieResponse {
+public class MovieResponse implements Serializable {
     private Long id;
     private String title;
     private String description;
