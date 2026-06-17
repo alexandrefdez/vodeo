@@ -248,15 +248,24 @@ const Catalog = () => {
 
       {/* ESTADO VACÍO (NO HAY RESULTADOS) */}
       {!loading && !error && items.length === 0 && (
-        <div className="text-center text-slate-400 mt-20 bg-slate-800/30 p-10 rounded-lg border border-slate-800">
-          <p className="text-2xl font-bold mb-2">No hay resultados</p>
-          <p className="text-slate-500">Prueba a buscar otro título o cambiar de categoría.</p>
-          <button 
-            onClick={handleClearFilters}
-            className={`mt-6 text-white font-bold px-6 py-2 rounded transition-colors cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
-          >
-            Ver todo el catálogo
-          </button>
+        <div className="text-center text-slate-400 mt-20 bg-slate-800/30 p-10 rounded-lg border border-slate-800 max-w-2xl mx-auto">
+          {searchQuery || selectedGenre ? (
+            <>
+              <p className="text-2xl font-bold mb-2">No hay resultados para tu búsqueda</p>
+              <p className="text-slate-500">Prueba a buscar otro título o quitar los filtros de categoría.</p>
+              <button 
+                onClick={handleClearFilters}
+                className={`mt-6 text-white font-bold px-6 py-2 rounded transition-colors cursor-pointer ${contentType === 'movie' ? 'bg-sky-500 hover:bg-sky-600' : 'bg-emerald-500 hover:bg-emerald-600'}`}
+              >
+                Ver todo el catálogo
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-bold mb-2 text-white">🎬 El catálogo está vacío</p>
+              <p className="text-slate-400">Aún no hay contenido disponible en esta sección. Vuelve más tarde para descubrir nuevas {contentType === 'movie' ? 'películas' : 'series'}.</p>
+            </>
+          )}
         </div>
       )}
 

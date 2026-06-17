@@ -355,9 +355,15 @@ const Player = () => {
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20">
             <div className="w-16 h-16 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-6"></div>
             <h2 className="text-2xl font-bold text-sky-400 mb-2">{hlsStatus}</h2>
-            <p className="text-slate-400 max-w-md text-center">
+            <p className="text-slate-400 max-w-md text-center mb-8">
               Preparando la mejor experiencia para tu conexión. El vídeo comenzará en breve.
             </p>
+            <button 
+              onClick={() => navigate(-1)} 
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-6 py-3 rounded-full font-bold transition-colors border border-slate-600 flex items-center gap-2 cursor-pointer shadow-lg"
+            >
+              <span className="text-xl">&larr;</span> Volver al catálogo
+            </button>
           </div>
         )}
 
