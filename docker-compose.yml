@@ -12,7 +12,9 @@ services:
       POSTGRES_DB: streaming_vod_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      
+    networks:
+      - vodeo-network
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: vodeo-rabbitmq
@@ -24,6 +26,8 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - vodeo-network
 
   redis:
     image: redis:7-alpine
@@ -32,6 +36,91 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - vodeo-network
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - USERS_HOST=users-service
+      - CATALOG_HOST=catalog-service
+      - STREAMING_HOST=streaming-service
+    depends_on:
+      - users-service
+      - catalog-service
+      - streaming-service
+    networks:
+      - vodeo-network
+
+  users-service:
+    build: ./users-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/streaming_vod_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    networks:
+      - vodeo-network
+
+  catalog-service:
+    build: ./catalog-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/streaming_vod_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - TMDB_API_KEY=${TMDB_API_KEY}
+      - OMDB_API_KEY=${OMDB_API_KEY}
+    depends_on:
+      - postgres-db
+      - rabbitmq
+      - redis
+    networks:
+      - vodeo-network
+
+  streaming-service:
+    build: ./streaming-service
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - VIDEOS_STORAGE_PATH=/vodeo-videos/
+    volumes:
+      - ./data_videos:/vodeo-videos
+    depends_on:
+      - rabbitmq
+    networks:
+      - vodeo-network
+
+  transcoding-service:
+    build: ./transcoding-service
+    environment:
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - VIDEOS_STORAGE_PATH=/vodeo-videos/
+    volumes:
+      - ./data_videos:/vodeo-videos
+    depends_on:
+      - rabbitmq
+    networks:
+      - vodeo-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - vodeo-network
+
+networks:
+  vodeo-network:
+    driver: bridge
 
 volumes:
   postgres_data:

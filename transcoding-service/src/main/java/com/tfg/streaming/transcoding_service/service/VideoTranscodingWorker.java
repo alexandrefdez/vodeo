@@ -3,6 +3,7 @@ package com.tfg.streaming.transcoding_service.service;
 import com.tfg.streaming.transcoding_service.dto.VideoEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -14,20 +15,24 @@ import java.util.List;
 @Slf4j
 public class VideoTranscodingWorker {
 
+    @Value("${videos.storage-path}")
+    private String storagePath;
+
     @RabbitListener(queues = "video_transcoding_queue")
     public void processVideo(VideoEvent event) {
         log.info("[TranscodingWorker] Iniciando procesamiento ABS/HLS para el archivo: {}", event.getFilename());
 
         try {
-            File inputFile = new File(event.getAbsolutePath());
+            File inputFile = new File(storagePath, event.getFilename());
+
             if (!inputFile.exists()) {
                 log.error("[TranscodingWorker] Archivo de origen no encontrado en la ruta: {}",
-                        event.getAbsolutePath());
+                        inputFile.getAbsolutePath());
                 return;
             }
 
             // Extraer el nombre sin la extension de forma segura
-            String filename = event.getFilename();
+            String filename = inputFile.getName();
             int dotIndex = filename.lastIndexOf(".");
             String folderName = dotIndex > 0 ? filename.substring(0, dotIndex) : filename;
 
@@ -41,7 +46,7 @@ public class VideoTranscodingWorker {
             String playlistPattern = "%v.m3u8";
 
             List<String> command = buildAbsCommand(
-                    event.getAbsolutePath(), segmentPattern, playlistPattern);
+                    inputFile.getAbsolutePath(), segmentPattern, playlistPattern);
 
             log.info("[TranscodingWorker] Ejecutando subproceso FFmpeg (Pipeline ABS) para: {}", folderName);
 

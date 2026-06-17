@@ -45,7 +45,7 @@ public class VideoService {
         // Si no es un subtitulo entonces es un video por lo que le mandamos el recado a
         // la cola
         if (!extension.equalsIgnoreCase(".vtt") && !extension.equalsIgnoreCase(".srt")) {
-            VideoEvent event = new VideoEvent(newFilename, filePath.toAbsolutePath().toString());
+            VideoEvent event = new VideoEvent(newFilename, newFilename);
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.VIDEO_EXCHANGE,
                     RabbitMQConfig.VIDEO_ROUTING_KEY,

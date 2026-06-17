@@ -9,3 +9,6 @@ spring:
     port: 5672
     username: guest
     password: guest
+  
+videos:
+  storage-path: C:/Proyectos/tfg-streaming-vod/data_videos/

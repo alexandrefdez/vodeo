@@ -6,35 +6,26 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      server:
-        webflux:
-          globalcors:
-            cors-configurations:
-              '[/**]':
-                allowedOrigins:
-                  - "http://localhost:5173"
-                allowedMethods:
-                  - "GET"
-                  - "POST"
-                  - "PUT"
-                  - "DELETE"
-                  - "OPTIONS"
-                allowedHeaders:
-                  - "*"
-                exposedHeaders:
-                  - "*"
-          routes:
-            - id: users-service
-              uri: http://localhost:8081
-              predicates:
-                - Path=/api/users/**
-
-            - id: catalog-service
-              uri: http://localhost:8082
-              predicates:
-                - Path=/api/catalog/**
-
-            - id: streaming-service
-              uri: http://localhost:8083
-              predicates:
-                - Path=/api/streaming/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:3000"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+      routes:
+        - id: users-service
+          uri: http://${USERS_HOST:localhost}:8081
+          predicates:
+            - Path=/api/users/**
+        - id: catalog-service
+          uri: http://${CATALOG_HOST:localhost}:8082
+          predicates:
+            - Path=/api/catalog/**
+        - id: streaming-service
+          uri: http://${STREAMING_HOST:localhost}:8083
+          predicates:
+            - Path=/api/streaming/**
