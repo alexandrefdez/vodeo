@@ -108,7 +108,7 @@ const Recommendations = ({ type = 'movie' }) => {
       <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
         <span className="text-pink-500 text-2xl">✨</span> Porque viste <span className="text-pink-400 underline decoration-pink-500/50 underline-offset-4">"{topGenre}"</span>
       </h2>
-      <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar snap-x">
+      <div className={`flex gap-4 overflow-x-auto pb-6 snap-x ${type === 'movie' ? 'custom-scrollbar' : 'custom-scrollbar-emerald'}`}>
         {recommended.map((item) => (
           <Link
             key={`rec-${item.id}`}

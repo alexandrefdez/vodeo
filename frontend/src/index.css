@@ -5,6 +5,25 @@ body {
   color: white;
 }
 
+.custom-scrollbar-emerald::-webkit-scrollbar {
+  height: 8px;
+}
+.custom-scrollbar-emerald::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 10px;
+}
+.custom-scrollbar-emerald::-webkit-scrollbar-thumb {
+  background: #10b981;
+  border-radius: 10px;
+}
+.custom-scrollbar-emerald::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
+.custom-scrollbar-emerald {
+  scrollbar-width: thin;
+  scrollbar-color: #10b981 #1e293b;
+}
+
 /* Scrollbar personalizada para paneles horizontales */
 .custom-scrollbar::-webkit-scrollbar {
   height: 8px; /* Altura finita y sutil */

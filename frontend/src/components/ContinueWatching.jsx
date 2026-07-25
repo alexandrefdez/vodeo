@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { authApi, catalogApi } from '../api/axiosConfig';
 
-const ContinueWatching = () => {
+const ContinueWatching = ({ type = 'movie' }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,7 +85,7 @@ const ContinueWatching = () => {
       <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
         <span className="text-red-600 text-xl">▶</span> Seguir Viendo
       </h2>
-      <div className="flex gap-4 overflow-x-auto pb-6 custom-scrollbar snap-x">
+      <div className={`flex gap-4 overflow-x-auto pb-6 snap-x ${type === 'movie' ? 'custom-scrollbar' : 'custom-scrollbar-emerald'}`}>
         {items.map((item) => {
           const { mediaDetails, currentTime, duration, mediaType, mediaId } = item;
           const progressPercentage = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
