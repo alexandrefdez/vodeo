@@ -334,7 +334,7 @@ public class CatalogService {
         if (videoPath != null && !videoPath.trim().isEmpty()) {
             // Mandamos el mensaje por RabbitMQ. Si el streaming-service esta caido Rabbit
             // se lo guarda
-            rabbitTemplate.convertAndSend("vodeo.exchange", "file.delete.key", videoPath);
+            rabbitTemplate.convertAndSend("vodeo.exchange", "file.delete.key", new FileDeletedEvent(videoPath));
         }
     }
 
