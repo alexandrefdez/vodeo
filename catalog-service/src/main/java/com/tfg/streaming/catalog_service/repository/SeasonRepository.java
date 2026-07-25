@@ -13,4 +13,6 @@ public interface SeasonRepository extends JpaRepository<Season, Long> {
     // Busca la siguiente temporada disponible de una serie
     Optional<Season> findFirstBySeriesIdAndSeasonNumberGreaterThanOrderBySeasonNumberAsc(Long seriesId,
             Integer seasonNumber);
+
+    boolean existsBySeriesIdAndSeasonNumber(Long seriesId, Integer seasonNumber);
 }

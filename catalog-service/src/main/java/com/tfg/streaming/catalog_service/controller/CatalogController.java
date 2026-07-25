@@ -8,9 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.tfg.streaming.catalog_service.dto.SubtitleRequest;
-import com.tfg.streaming.catalog_service.dto.SubtitleResponse;
-
 import java.util.List;
 
 @RestController
@@ -143,6 +140,12 @@ public class CatalogController {
     @GetMapping("/episodes/{id}")
     public ResponseEntity<EpisodeResponse> getEpisodeById(@PathVariable Long id) {
         return ResponseEntity.ok(catalogService.getEpisodeById(id));
+    }
+
+    @DeleteMapping("/seasons/{id}")
+    public ResponseEntity<Void> deleteSeason(@PathVariable Long id) {
+        catalogService.deleteSeason(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/episodes/{id}")

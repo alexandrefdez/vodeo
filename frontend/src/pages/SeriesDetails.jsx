@@ -131,7 +131,13 @@ const SeriesDetails = () => {
       setShowSeasonForm(false);
       setNewSeasonNumber('');
       toast.success("Temporada creada");
-    } catch (err) { toast.error("Error al crear temporada"); }
+    } catch (err) {
+      if (err.response?.status === 409) {
+        toast.error("Ya existe esa temporada para esta serie");
+      } else {
+        toast.error("Error al crear temporada");
+      }
+    }
   };
 
   const handleAutoFetchEpisode = async () => {
@@ -193,6 +199,18 @@ const SeriesDetails = () => {
       toast.error("Error al publicar episodio");
     } finally { setIsUploading(false); }
   };
+
+  const handleDeleteSeason = async (seasonId) => {
+  if (!window.confirm("¿Seguro que quieres borrar esta temporada entera, con todos sus episodios?")) return;
+  try {
+    await catalogApi.delete(`/seasons/${seasonId}`);
+    toast.success("Temporada borrada");
+    setActiveSeasonId(null);
+    setRefreshKey(old => old + 1);
+  } catch (err) {
+    toast.error("Error al borrar la temporada");
+  }
+};
 
   const handleDeleteEpisode = async (episodeId) => {
     if(!window.confirm("¿Seguro que quieres borrar este episodio de forma definitiva?")) return;
@@ -355,9 +373,16 @@ const SeriesDetails = () => {
               {/* Pestañas de Temporadas */}
               <div className="flex gap-2 overflow-x-auto custom-scrollbar mb-6 pb-2">
                 {seasons.map(s => (
-                  <button key={s.id} onClick={() => setActiveSeasonId(s.id)} className={`px-6 py-2 rounded-full font-bold whitespace-nowrap cursor-pointer transition-all ${activeSeasonId === s.id ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
-                    Temporada {s.seasonNumber}
-                  </button>
+                  <div key={s.id} className={`flex items-center rounded-full whitespace-nowrap transition-all ${activeSeasonId === s.id ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400'}`}>
+                    <button onClick={() => setActiveSeasonId(s.id)} className="px-6 py-2 font-bold cursor-pointer">
+                      Temporada {s.seasonNumber}
+                    </button>
+                    {user?.role === 'ADMIN' && (
+                      <button onClick={() => handleDeleteSeason(s.id)} className="pr-4 hover:text-red-400 cursor-pointer transition-colors" title="Borrar Temporada">
+                        🗑️
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
 
