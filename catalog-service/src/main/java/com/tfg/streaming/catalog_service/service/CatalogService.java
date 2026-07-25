@@ -2,6 +2,7 @@ package com.tfg.streaming.catalog_service.service;
 
 import com.tfg.streaming.catalog_service.dto.*;
 import com.tfg.streaming.catalog_service.exception.ResourceNotFoundException;
+import com.tfg.streaming.catalog_service.exception.ConflictException;
 import com.tfg.streaming.catalog_service.model.Episode;
 import com.tfg.streaming.catalog_service.model.Genre;
 import com.tfg.streaming.catalog_service.model.Movie;
@@ -209,6 +210,11 @@ public class CatalogService {
     public SeasonResponse addSeason(Long seriesId, SeasonRequest request) {
         Series series = seriesRepository.findById(seriesId)
                 .orElseThrow(() -> new ResourceNotFoundException("Series not found"));
+
+        if (seasonRepository.existsBySeriesIdAndSeasonNumber(seriesId, request.getSeasonNumber())) {
+            throw new ConflictException("Ya existe la temporada " + request.getSeasonNumber() + " para esta serie");
+        }
+
         Season season = new Season();
         season.setSeasonNumber(request.getSeasonNumber());
         season.setOverview(request.getOverview());
@@ -244,6 +250,23 @@ public class CatalogService {
 
         // Avisar al Users Service
         rabbitTemplate.convertAndSend("vodeo.exchange", "media.deleted.key", new MediaDeletedEvent("episode", id));
+    }
+
+    @CacheEvict(value = "series", allEntries = true)
+    public void deleteSeason(Long id) {
+        Season season = seasonRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Season not found"));
+
+        if (season.getEpisodes() != null) {
+            season.getEpisodes().forEach(ep -> {
+                deletePhysicalVideo(ep.getVideoPath());
+                if (ep.getSubtitles() != null) {
+                    ep.getSubtitles().forEach(sub -> deletePhysicalVideo(sub.getSubtitlePath()));
+                }
+            });
+        }
+
+        seasonRepository.deleteById(id);
     }
 
     @Cacheable(value = "series", key = "'ep_' + #id")
@@ -311,7 +334,7 @@ public class CatalogService {
         if (videoPath != null && !videoPath.trim().isEmpty()) {
             // Mandamos el mensaje por RabbitMQ. Si el streaming-service esta caido Rabbit
             // se lo guarda
-            rabbitTemplate.convertAndSend("vodeo.exchange", "file.delete.key", videoPath);
+            rabbitTemplate.convertAndSend("vodeo.exchange", "file.delete.key", new FileDeletedEvent(videoPath));
         }
     }
 

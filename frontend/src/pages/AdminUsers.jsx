@@ -70,7 +70,7 @@ const AdminUsers = () => {
             onClick={() => navigate('/catalog')}
             className="text-slate-400 hover:text-white transition-colors border border-slate-700 px-4 py-2 rounded cursor-pointer font-bold bg-slate-800"
           >
-            &larr; Catálogo
+            &larr; Volver al Catálogo
           </button>
         </div>
       </div>

@@ -66,7 +66,7 @@ const AdminDashboard = () => {
             onClick={() => navigate('/catalog')}
             className="text-slate-400 hover:text-white transition-colors border border-slate-700 px-4 py-2 rounded cursor-pointer font-bold"
           >
-            &larr; Ir al Catálogo
+            &larr; Volver al Catálogo
           </button>
         </div>
       </div>
