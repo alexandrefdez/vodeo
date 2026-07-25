@@ -123,13 +123,13 @@ const ReviewSection = ({ mediaId, mediaType }) => {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows="3"
-              className="w-full p-4 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-sky-500 resize-none transition-colors"
+              className={`w-full p-4 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none resize-none transition-colors ${mediaType === 'movie' ? 'focus:border-sky-500 custom-scrollbar' : 'focus:border-emerald-500 custom-scrollbar-emerald'}`}
             />
             
             <div className="flex justify-end">
               <button 
                 type="submit" disabled={isSubmitting}
-                className="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-8 rounded-lg shadow-lg shadow-sky-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className={`text-white font-bold py-2 px-8 rounded-lg shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${mediaType === 'movie' ? 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20' : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20'}`}
               >
                 {isSubmitting ? 'Enviando...' : 'Publicar'}
               </button>
