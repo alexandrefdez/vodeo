@@ -299,7 +299,7 @@ const Admin = () => {
 
               <div>
                 <label className="block text-sm text-slate-400 mb-1 font-bold">Sinopsis</label>
-                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none ${contentType === 'movie' ? 'focus:border-sky-500' : 'focus:border-emerald-500'} resize-none`} required />
+                <textarea name="description" value={formData.description} onChange={handleInputChange} rows="3" className={`w-full p-3 bg-slate-900 border border-slate-700 rounded focus:outline-none resize-none ${contentType === 'movie' ? 'focus:border-sky-500 custom-scrollbar' : 'focus:border-emerald-500 custom-scrollbar-emerald'}`} required />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-900/50 rounded border border-slate-700/50">

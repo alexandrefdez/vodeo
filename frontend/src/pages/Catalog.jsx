@@ -211,7 +211,7 @@ const Catalog = () => {
           </button>
         </form>
 
-        <div className="w-full md:w-2/3 overflow-x-auto whitespace-nowrap pb-4 custom-scrollbar">
+        <div className={`w-full md:w-2/3 overflow-x-auto whitespace-nowrap pb-4 ${contentType === 'movie' ? 'custom-scrollbar' : 'custom-scrollbar-emerald'}`}>
           <div className="flex gap-3 items-center">
             <span className="text-slate-400 font-semibold mr-2">Categorías:</span>
             <button
@@ -358,7 +358,7 @@ const Catalog = () => {
            {/* CONTINUAR VIENDO Y RECOMENDACIONES */}
           {!searchQuery && !selectedGenre && currentPage === 0 && (
             <div className="mt-16 border-t border-slate-800 pt-8">
-              <ContinueWatching />
+              <ContinueWatching type={contentType} />
               {/* Recomendaciones */}
               <Recommendations type={contentType} />
             </div>

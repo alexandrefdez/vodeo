@@ -371,7 +371,7 @@ const SeriesDetails = () => {
           {seasons.length > 0 ? (
             <div>
               {/* Pestañas de Temporadas */}
-              <div className="flex gap-2 overflow-x-auto custom-scrollbar mb-6 pb-2">
+              <div className="flex gap-2 overflow-x-auto custom-scrollbar-emerald mb-6 pb-2">
                 {seasons.map(s => (
                   <div key={s.id} className={`flex items-center rounded-full whitespace-nowrap transition-all ${activeSeasonId === s.id ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-800 text-slate-400'}`}>
                     <button onClick={() => setActiveSeasonId(s.id)} className="px-6 py-2 font-bold cursor-pointer">
@@ -419,7 +419,7 @@ const SeriesDetails = () => {
                       </div>
                       <div className="flex flex-col">
                         <label className="text-xs text-slate-400 mb-1">Sinopsis</label>
-                        <textarea placeholder="Sinopsis..." value={episodeData.description} onChange={e => setEpisodeData({...episodeData, description: e.target.value})} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500" rows="2" required />
+                        <textarea placeholder="Sinopsis..." value={episodeData.description} onChange={e => setEpisodeData({...episodeData, description: e.target.value})} className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-white focus:outline-none focus:border-emerald-500 custom-scrollbar-emerald" rows="2" required />
                       </div>
                       
                       {/* BOTÓN DE SELECCIÓN DE VÍDEO ARREGLADO */}
