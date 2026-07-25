@@ -147,7 +147,7 @@ const Catalog = () => {
           {user?.role === 'ADMIN' && (
             <button 
               onClick={() => navigate('/admin')}
-              className="text-emerald-500 hover:text-emerald-400 transition-colors font-bold mr-2 cursor-pointer"
+              className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors px-4 py-2 rounded cursor-pointer font-bold mr-2"
             >
               Panel Admin
             </button>
