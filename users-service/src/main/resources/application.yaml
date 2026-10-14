@@ -6,8 +6,8 @@ spring:
     name: users-service
   datasource:
     url: jdbc:postgresql://localhost:5433/streaming_vod_db
-    username: root
-    password: rootpassword
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:rootpassword}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -18,5 +18,5 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 jwt:
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  secret: ${JWT_SECRET}
   expiration: 86400000
