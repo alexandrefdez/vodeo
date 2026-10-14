@@ -11,4 +11,4 @@ spring:
     password: guest
   
 videos:
-  storage-path: C:/Proyectos/tfg-streaming-vod/data_videos/
+  storage-path: ${VIDEOS_STORAGE_PATH:../data_videos/}

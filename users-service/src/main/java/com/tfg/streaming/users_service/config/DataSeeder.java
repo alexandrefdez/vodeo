@@ -2,6 +2,7 @@ package com.tfg.streaming.users_service.config;
 
 import com.tfg.streaming.users_service.model.User;
 import com.tfg.streaming.users_service.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,9 @@ public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    @Value("${vodeo.admin.password:admin1234}")
+    private String adminPassword;
 
     public DataSeeder(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -24,11 +28,11 @@ public class DataSeeder implements CommandLineRunner {
             User admin = new User();
             admin.setUsername("Administrador Supremo");
             admin.setEmail("admin@vodeo.com");
-            admin.setPassword(passwordEncoder.encode("asd"));
+            admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRole(User.Role.ADMIN);
 
             userRepository.save(admin);
-            System.out.println("[VODEO] Usuario ADMIN creado automáticamente: admin@vodeo.com / asd");
+            System.out.println("[VODEO] Usuario ADMIN creado automáticamente: admin@vodeo.com");
         }
     }
 }

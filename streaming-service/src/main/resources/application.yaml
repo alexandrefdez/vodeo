@@ -15,8 +15,8 @@ spring:
     password: guest
 
 videos:
-  storage-path: C:/Proyectos/tfg-streaming-vod/data_videos/
+  storage-path: ${VIDEOS_STORAGE_PATH:../data_videos/}
 
 jwt:
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  secret: ${JWT_SECRET}
   expiration: 86400000

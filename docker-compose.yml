@@ -7,8 +7,8 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: rootpassword
+      POSTGRES_USER: ${DB_USER:-root}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-rootpassword}
       POSTGRES_DB: streaming_vod_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -59,9 +59,11 @@ services:
     build: ./users-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/streaming_vod_db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_DATASOURCE_USERNAME=${DB_USER:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-rootpassword}
       - SPRING_RABBITMQ_HOST=rabbitmq
+      - JWT_SECRET=${JWT_SECRET:?Define JWT_SECRET en tu entorno o archivo .env (ver .env.example)}
+      - VODEO_ADMIN_PASSWORD=${VODEO_ADMIN_PASSWORD:-admin1234}
     depends_on:
       - postgres-db
       - rabbitmq
@@ -72,11 +74,12 @@ services:
     build: ./catalog-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/streaming_vod_db
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_DATASOURCE_USERNAME=${DB_USER:-root}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD:-rootpassword}
       - SPRING_RABBITMQ_HOST=rabbitmq
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:?Define JWT_SECRET en tu entorno o archivo .env (ver .env.example)}
       - TMDB_API_KEY=${TMDB_API_KEY}
       - OMDB_API_KEY=${OMDB_API_KEY}
     depends_on:
@@ -91,6 +94,7 @@ services:
     environment:
       - SPRING_RABBITMQ_HOST=rabbitmq
       - VIDEOS_STORAGE_PATH=/vodeo-videos/
+      - JWT_SECRET=${JWT_SECRET:?Define JWT_SECRET en tu entorno o archivo .env (ver .env.example)}
     volumes:
       - ./data_videos:/vodeo-videos
     depends_on:
