@@ -26,7 +26,7 @@ public class DataSeeder implements CommandLineRunner {
         // Comprobamos si la base de datos esta vacia de administradores
         if (userRepository.findByEmail("admin@vodeo.com").isEmpty()) {
             User admin = new User();
-            admin.setUsername("Administrador Supremo");
+            admin.setUsername("Administrador");
             admin.setEmail("admin@vodeo.com");
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setRole(User.Role.ADMIN);
