@@ -219,6 +219,7 @@ Trabajé con Kanban en GitHub Projects. Cada cambio partió de una issue, se des
 ## Autor
 
 Alexandre Fernández Fernández
+
 Graduado en Ingeniería Informática (mención en Ingeniería del Software) por la Universidade da Coruña
 
 GitHub: [@alexandrefdez](https://github.com/alexandrefdez)
