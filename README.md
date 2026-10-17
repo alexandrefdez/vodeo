@@ -4,6 +4,8 @@
 
 Plataforma de streaming de vídeo bajo demanda (VOD) con arquitectura de microservicios, transcodificación asíncrona y reproducción adaptativa HLS.
 
+[![Ver demo en YouTube](https://img.shields.io/badge/Ver_demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/YdSzvZqqrVs)
+
 ![Java](https://img.shields.io/badge/Java_17-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.5-6DB33F?style=flat-square&logo=springboot&logoColor=white)
 ![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
@@ -17,7 +19,11 @@ Trabajo de Fin de Grado del Grado en Ingeniería Informática (mención en Ingen
 </div>
 
 <p align="center">
-  <img src="docs/img/catalogo.png" alt="Catálogo de Vodeo" width="900">
+  <a href="https://youtu.be/YdSzvZqqrVs">
+    <img src="docs/img/catalogo.png" alt="Ver la demo de Vodeo en YouTube" width="900">
+  </a>
+  <br>
+  <sub><b>Ver demo (40 s):</b> pulsa la imagen para abrir el vídeo en YouTube.</sub>
 </p>
 
 ## Sobre el proyecto
